@@ -1,0 +1,106 @@
+/* --- 1. SIMPLIFY MODE (Clean White Paper) --- */
+.ca-simplified-body {
+    background-color: #f4f7f6 !important;
+    color: #333 !important;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    line-height: 1.6 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+}
+
+.ca-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 50px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    min-height: 100vh;
+}
+
+.ca-title {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #0078d4;
+    padding-bottom: 15px;
+    line-height: 1.2;
+}
+
+.ca-content p {
+    font-size: 19px;
+    line-height: 1.8;
+    margin-bottom: 1.5em;
+    color: #222;
+}
+
+.ca-content h2, .ca-content h3 { margin-top: 1.5em; color: #333; }
+
+/* Clean Media */
+.ca-content img, .ca-content video, .ca-content iframe {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
+    margin: 30px auto;
+    border-radius: 4px;
+}
+.ca-content .ad, .ca-content .nav, .ca-content .footer { display: none !important; }
+
+/* --- 2. DYSLEXIA FONT STACK --- */
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
+.ca-dyslexia-mode, .ca-dyslexia-mode * {
+    font-family: 'OpenDyslexic', 'Comic Neue', 'Comic Sans MS', 'Verdana', sans-serif !important;
+    letter-spacing: 0.05em !important;
+    word-spacing: 0.1em !important;
+    line-height: 2.0 !important;
+}
+
+/* --- 3. READING RULER (Spotlight) --- */
+#ca-ruler {
+    position: fixed;
+    left: 0;
+    width: 100vw;
+    height: 60px;
+    pointer-events: none; /* Clicks pass through */
+    z-index: 2147483647;
+    display: none;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); /* Dims rest of screen */
+    border-top: 2px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    transition: top 0.05s linear;
+}
+
+/* --- 4. BIONIC READING --- */
+.ca-bionic-target {
+    font-weight: inherit;
+}
+.ca-bionic-mode .ca-bionic-target {
+    font-weight: 700 !important;
+}
+
+/* --- 5. TEXT TO SPEECH (TTS) --- */
+/* The word wrapper */
+.ca-tts-word {
+    display: inline;
+}
+
+/* The active word being spoken */
+.ca-tts-active {
+    background-color: #ffeb3b !important; /* Bright Yellow Highlight */
+    color: #000 !important;
+    border-radius: 3px;
+    box-shadow: 0 0 0 2px #ffeb3b; /* Ensure highlight is visible */
+}
+
+/* Animation: Snappy (Instant) */
+.ca-tts-anim-snappy .ca-tts-active {
+    transition: none !important;
+}
+
+/* Animation: Smooth (Gradual Fade) */
+.ca-tts-anim-smooth .ca-tts-active {
+    transition: background-color 0.2s ease-in-out, color 0.2s ease !important;
+}
