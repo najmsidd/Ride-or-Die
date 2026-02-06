@@ -23,7 +23,46 @@ let ttsUtterance = null;
 let ttsWordMap = []; 
 let isTTSActive = false;
 
-// --- 1. MESSAGE LISTENER ---
+// --- 1. INITIALIZE AND RESTORE PERSISTENT STATE ---
+// Reads from 'caSettings' (the same key popup.js uses) to re-apply
+// active modes automatically after every page navigation.
+function restorePersistedState() {
+    chrome.storage.local.get(['caSettings'], (result) => {
+        if (result.caSettings) {
+            const s = result.caSettings;
+            const hasActiveFeature = s.simplify || s.focusMode || s.ruler ||
+                                     s.dyslexia || s.bionic || s.tts ||
+                                     (s.tint && s.tint !== 'off') ||
+                                     (s.contrast && s.contrast !== 'off');
+            if (hasActiveFeature) {
+                console.log('ContextAware: Restoring saved state', s);
+                applyState(s);
+            }
+        }
+    });
+}
+
+// Ensure the DOM is ready before manipulating it
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', restorePersistedState);
+} else {
+    restorePersistedState();
+}
+
+// --- 2. LISTEN FOR STORAGE CHANGES (Cross-Tab Sync) ---
+// This ensures that when settings are changed in one tab (via popup),
+// all other open tabs automatically update to match the new state
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.caSettings) {
+        const newState = changes.caSettings.newValue;
+        if (newState) {
+            console.log('ContextAware: Settings changed, syncing to this tab', newState);
+            applyState(newState);
+        }
+    }
+});
+
+// --- 3. MESSAGE LISTENER ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "update_state") {
         applyState(request.state);
@@ -65,7 +104,83 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// --- 2. MAIN STATE APPLICATOR ---
+// --- 3. NAVIGATION LINK EXTRACTOR ---
+// Finds the main navigation element, extracts clean links, and
+// rebuilds a standardized, reader-mode navbar (max 7 links).
+function extractNavigationLinks(doc) {
+    const navSelectors = [
+        'nav',
+        'header nav',
+        '[role="navigation"]',
+        '.navbar',
+        '.nav-bar',
+        '.navigation',
+        '#navbar',
+        '#navigation'
+    ];
+
+    let navElement = null;
+    for (const selector of navSelectors) {
+        navElement = doc.querySelector(selector);
+        if (navElement) break;
+    }
+
+    // Fallback: try the <header> itself if no <nav> was found inside it
+    if (!navElement) {
+        navElement = doc.querySelector('header');
+    }
+
+    if (!navElement) return null;
+
+    const anchors = navElement.querySelectorAll('a[href]');
+    if (anchors.length === 0) return null;
+
+    const seen = new Set();
+    const links = [];
+    const MAX_LINKS = 7;
+
+    // Heuristic: skip links that are likely non-navigation (login, icons-only, etc.)
+    const skipPatterns = /sign.?in|log.?in|sign.?up|register|subscribe|download|install|cart|search/i;
+
+    for (const a of anchors) {
+        if (links.length >= MAX_LINKS) break;
+
+        let href = a.getAttribute('href') || '';
+        // Skip empty, anchor-only, and javascript: links
+        if (!href || href === '#' || href.startsWith('javascript:')) continue;
+
+        // Resolve relative URLs against the current page
+        try {
+            href = new URL(href, document.location.href).href;
+        } catch (_) {
+            continue;
+        }
+
+        // Derive visible text; fall back to aria-label or title
+        let text = (a.innerText || '').trim();
+        if (!text) text = (a.getAttribute('aria-label') || a.getAttribute('title') || '').trim();
+        if (!text || text.length > 30) continue; // Skip icon-only or absurdly long labels
+
+        if (skipPatterns.test(text)) continue;
+
+        // Deduplicate by href
+        if (seen.has(href)) continue;
+        seen.add(href);
+
+        links.push({ href, text });
+    }
+
+    if (links.length === 0) return null;
+
+    // Build clean, standardized HTML
+    const linkHTML = links
+        .map(l => `<a class="ca-nav-link" href="${l.href}">${l.text}</a>`)
+        .join('');
+
+    return `<div class="ca-nav-container">${linkHTML}</div>`;
+}
+
+// --- 4. MAIN STATE APPLICATOR ---
 function applyState(state) {
     lastState = state || lastState;
 
@@ -85,13 +200,23 @@ function applyState(state) {
                 rescuedForm = form.outerHTML;
             }
 
+            // Rescue navbar — extract and normalize navigation links
+            const rescuedNavbarHTML = extractNavigationLinks(document);
+
             try {
                 const article = new Readability(docClone).parse();
                 if (article && article.content.length > 200) {
                     articleText = article.textContent;
                     
                     document.body.classList.add("ca-simplified-body");
-                    let htmlPayload = `
+                    let htmlPayload = '';
+                    
+                    // Add normalized rescued navbar at the top
+                    if (rescuedNavbarHTML) {
+                        htmlPayload += rescuedNavbarHTML;
+                    }
+                    
+                    htmlPayload += `
                         <div class="ca-container">
                             <h1 class="ca-title">${article.title}</h1>
                             <div class="ca-content">${article.content}</div>
@@ -108,6 +233,14 @@ function applyState(state) {
                     htmlPayload += `</div>`; 
                     document.body.innerHTML = htmlPayload;
                     
+                    // Push content below the fixed navbar
+                    const navEl = document.querySelector('.ca-nav-container');
+                    if (navEl) {
+                        requestAnimationFrame(() => {
+                            document.body.style.paddingTop = navEl.offsetHeight + 'px';
+                        });
+                    }
+
                     bionicProcessed = false; 
                     tintElement = null;
                     if(isTTSActive) stopTTS(); 
@@ -119,6 +252,7 @@ function applyState(state) {
         if (originalBody && !summaryMode) {
             document.body.innerHTML = originalBody;
             document.body.classList.remove("ca-simplified-body");
+            document.body.style.paddingTop = '';
             originalBody = null;
             articleText = "";
             bionicProcessed = false;
