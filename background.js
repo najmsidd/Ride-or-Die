@@ -1,43 +1,52 @@
 chrome.commands.onCommand.addListener((command) => {
-    if (command === "toggle-reader") {
-        // Get the active tab
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-            if (tabs.length === 0) return;
-            const tabId = tabs[0].id;
+    if (command === "toggle-focus") {
+        toggleFocusModeShortcut();
+    }
+});
 
-            // 1. Fetch current settings
-            chrome.storage.local.get(['caSettings'], (result) => {
-                // Default state if nothing is saved yet
-                let state = result.caSettings || { 
-                    simplify: false, 
-                    ruler: false, 
-                    dyslexia: false, 
-                    bionic: false, 
-                    tts: false,
-                    tint: "off"
-                };
+function toggleFocusModeShortcut() {
+    chrome.storage.local.get(['caSettings'], (result) => {
+        let state = result.caSettings;
+        
+        // Initialize defaults if empty
+        if (!state) {
+            state = { 
+                simplify: false, 
+                focusMode: false,
+                ruler: false, 
+                dyslexia: false, 
+                bionic: false, 
+                tts: false 
+            };
+        }
 
-                // 2. Toggle the simplify mode
-                state.simplify = !state.simplify;
+        // Toggle Focus Mode
+        state.focusMode = !state.focusMode;
 
-                // 3. Save the new state (so popup stays in sync)
-                chrome.storage.local.set({ caSettings: state });
+        // Save and Apply
+        chrome.storage.local.set({ caSettings: state }, () => {
+            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+                if (!tabs[0] || tabs[0].url.startsWith('chrome://')) return;
 
-                // 4. Inject scripts if needed (Robustness check)
-                // We execute script first to ensure content.js is loaded before messaging
-                chrome.scripting.executeScript({
-                    target: { tabId: tabId },
-                    files: ['readability.js', 'summarizer.js', 'content.js']
-                }, () => {
-                    chrome.scripting.insertCSS({ target: { tabId: tabId }, files: ['content.css'] });
-                    
-                    // 5. Send message to Apply State
-                    chrome.tabs.sendMessage(tabId, { 
-                        action: "update_state", 
-                        state: state 
+                const tabId = tabs[0].id;
+
+                // 1. Try sending a message first (Fastest)
+                chrome.tabs.sendMessage(tabId, { action: "update_state", state: state })
+                    .catch(() => {
+                        // 2. If message fails, it means script isn't injected. Inject now.
+                        chrome.scripting.executeScript({
+                            target: { tabId: tabId },
+                            files: ['readability.js', 'summarizer.js', 'content.js']
+                        }, () => {
+                            chrome.scripting.insertCSS({ target: { tabId: tabId }, files: ['content.css'] });
+                            
+                            // 3. Send message again after injection
+                            setTimeout(() => {
+                                chrome.tabs.sendMessage(tabId, { action: "update_state", state: state });
+                            }, 50);
+                        });
                     });
-                });
             });
         });
     });
-});
+}

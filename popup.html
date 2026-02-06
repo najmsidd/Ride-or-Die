@@ -8,7 +8,6 @@
     <div class="header">
         <h2>ContextAware</h2>
     </div>
-
     <div class="controls">
         <div class="control-card">
             <div class="control-row">
@@ -22,7 +21,18 @@
                 </label>
             </div>
         </div>
-
+        <div class="control-card">
+            <div class="control-row">
+                <div class="label-group">
+                    <span class="label-title">🎯 Focus Mode</span>
+                    <span class="label-desc">Highlight buttons & inputs</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-focus">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
         <div class="control-card">
             <div class="control-row">
                 <div class="label-group">
@@ -35,7 +45,6 @@
                 </label>
             </div>
         </div>
-        
         <div class="control-card">
             <div class="control-row">
                 <div class="label-group">
@@ -48,7 +57,6 @@
                 </label>
             </div>
         </div>
-
         <div class="control-card">
             <div class="control-row">
                 <div class="label-group">
@@ -61,38 +69,6 @@
                 </label>
             </div>
         </div>
-
-        <div class="control-card">
-            <div class="control-row">
-                <div class="label-group">
-                    <span class="label-title">🎨 Sensory Tint</span>
-                    <span class="label-desc">Reduce visual stress (Irlen)</span>
-                </div>
-                <select id="select-tint" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; width: 100px; font-size: 12px;">
-                    <option value="off">Off</option>
-                    <option value="blue">Cool Blue</option>
-                    <option value="green">Soft Green</option>
-                    <option value="rose">Pale Rose</option>
-                    <option value="peach">Warm Peach</option>
-                    <option value="gray">Dim Gray</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="control-card">
-            <div class="control-row">
-                <div class="label-group">
-                    <span class="label-title">🌗 High Contrast</span>
-                    <span class="label-desc">Shield & Definer Modes</span>
-                </div>
-                <select id="select-contrast" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; width: 100px; font-size: 12px;">
-                    <option value="off">Normal</option>
-                    <option value="dark-high">Dark Shield</option>
-                    <option value="light-high">Light Definer</option>
-                </select>
-            </div>
-        </div>
-
         <div class="control-card">
             <div class="control-row">
                 <div class="label-group">
@@ -104,20 +80,17 @@
                     <span class="slider round"></span>
                 </label>
             </div>
-
             <div id="tts-settings" class="hidden" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
                 <div class="slider-container">
                     <span class="slider-label">Speed</span>
                     <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1" class="range-slider">
                     <span class="slider-label" id="rate-value">1.0x</span>
                 </div>
-
                 <div class="slider-container">
                     <span class="slider-label">Pitch</span>
                     <input type="range" id="tts-pitch" min="0" max="2" step="0.1" value="1" class="range-slider">
                     <span class="slider-label" id="pitch-value">1.0</span>
                 </div>
-
                 <div class="control-row" style="margin-top: 10px;">
                     <span class="slider-label" style="flex:1;">Animation:</span>
                     <select id="tts-anim" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 11px;">
@@ -125,36 +98,28 @@
                         <option value="smooth">Smooth (Gradual)</option>
                     </select>
                 </div>
-
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button id="btn-tts-play" class="action-btn" style="background:#28a745;">▶ Play</button>
                     <button id="btn-tts-stop" class="action-btn" style="background:#dc3545;">⏹ Stop</button>
                 </div>
             </div>
         </div>
-
         <div class="control-card">
             <div class="label-group" style="margin-bottom: 10px;">
                 <span class="label-title">📝 Quick Summary</span>
-                <span class="label-desc">Adjust summary length (3-25 sentences)</span>
+                <span class="label-desc">Adjust length with slider</span>
             </div>
-            
-            <div id="length-slider-container">
-                <div class="slider-container">
-                    <span class="slider-label">Brief</span>
-                    <input type="range" id="summary-slider" min="3" max="25" value="10" class="range-slider">
-                    <span class="slider-label">Detailed</span>
-                </div>
+            <div class="slider-container">
+                <span class="slider-label">Short</span>
+                <input type="range" id="summary-slider" min="3" max="15" value="5" class="range-slider">
+                <span class="slider-label">Long</span>
             </div>
-
             <button id="btn-summarize" class="action-btn">Generate Summary</button>
-            
             <div id="summary-result" class="hidden">
                 <textarea id="summary-text" readonly placeholder="Summary will appear here..."></textarea>
             </div>
         </div>
     </div>
-
     <script src="popup.js"></script>
 </body>
 </html>
