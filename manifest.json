@@ -1,20 +1,32 @@
 {
   "manifest_version": 3,
-  "name": "ContextAware: Simplify Web",
-  "version": "2.6",
-  "description": " distraction-free reading and form filling assistant.",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "name": "ContextAware: Focus & Accessibility",
+  "version": "1.0",
+  "description": "Reduces cognitive load with Reader View, Line Focus, and Summarization.",
+  "permissions": ["activeTab", "scripting", "storage", "commands"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png", 
+      "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
-  "icons": { 
-    "16": "icons/icon16.png", 
-    "48": "icons/icon48.png", 
-    "128": "icons/icon128.png" 
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "toggle-reader": {
+      "suggested_key": {
+        "default": "Alt+R",
+        "mac": "Alt+R"
+      },
+      "description": "Toggle Reader View"
+    }
   }
 }

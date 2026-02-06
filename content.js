@@ -1,5 +1,5 @@
 if (window.__caContentInjected) {
-    // ...existing code...
+    // Already injected, skip
 } else {
     window.__caContentInjected = true;
 
@@ -11,10 +11,11 @@ if (window.__caContentInjected) {
     // Summary View State
     let summaryMode = false;
     let summaryOriginalBody = null;
-    let lastState = { simplify: false, ruler: false, dyslexia: false, bionic: false, tts: false };
+    let lastState = { simplify: false, ruler: false, dyslexia: false, bionic: false, tts: false, tint: "off", contrast: "off" };
 
-    // Global reference for ruler
+    // Global references
     let rulerElement = null;
+    let tintElement = null;
 
     // TTS Variables
     let ttsUtterance = null;
@@ -27,15 +28,12 @@ if (window.__caContentInjected) {
             applyState(request.state);
         } 
         else if (request.action === "generate_summary") {
-            // Get fresh content every time
             let sourceText;
             
-            // If in summary mode, restore the page first to get fresh content
             if (summaryMode) {
                 restoreSummaryView();
             }
             
-            // Get text from simplified view or original page
             const contentContainer = document.querySelector('.ca-content');
             if (contentContainer) {
                 sourceText = contentContainer.innerText;
@@ -47,7 +45,6 @@ if (window.__caContentInjected) {
             
             const cleanSource = sourceText.split('\n').filter(line => line.trim().length > 40).join(' ');
 
-            // Use algorithmic approach only
             if (window.Summarizer) {
                 const result = window.Summarizer.generate(cleanSource, request.length);
                 showSummaryOnPage(result);
@@ -56,7 +53,6 @@ if (window.__caContentInjected) {
                 sendResponse({ summary: "Error: Summarizer library not loaded." });
             }
         }
-        // TTS Commands
         else if (request.action === "tts_control") {
             handleTTSControl(request.command, request.settings);
         }
@@ -83,7 +79,6 @@ if (window.__caContentInjected) {
             if (!articleText) {
                 const docClone = document.cloneNode(true);
                 
-                // Rescue Forms
                 let rescuedForm = null;
                 const form = docClone.querySelector('form');
                 if (form && form.querySelectorAll('input, select, textarea').length > 0) {
@@ -116,6 +111,7 @@ if (window.__caContentInjected) {
                         document.body.innerHTML = htmlPayload;
                         
                         bionicProcessed = false; 
+                        tintElement = null;
                         if(isTTSActive) stopTTS(); 
                     }
                 } catch(e) { console.error(e); }
@@ -127,6 +123,7 @@ if (window.__caContentInjected) {
                 originalBody = null;
                 articleText = "";
                 bionicProcessed = false;
+                tintElement = null;
                 if(isTTSActive) stopTTS();
             }
         }
@@ -141,12 +138,58 @@ if (window.__caContentInjected) {
         // Feature 4: Reading Ruler
         toggleRuler(state.ruler);
         
-        // Feature 5: TTS
+        // Feature 5: Sensory Tint
+        toggleTint(state.tint);
+
+        // Feature 6: Contrast Mode
+        toggleContrast(state.contrast);
+
+        // Feature 7: TTS
         if (state.tts) {
             isTTSActive = true; 
         } else {
             stopTTS();
             isTTSActive = false;
+        }
+    }
+
+    // --- CONTRAST LOGIC ---
+    function toggleContrast(mode) {
+        document.documentElement.classList.remove(
+            'ca-contrast-dark-high', 
+            'ca-contrast-light-high'
+        );
+
+        if (mode && mode !== 'off') {
+            document.documentElement.classList.add(`ca-contrast-${mode}`);
+        }
+    }
+
+    // --- TINT LOGIC ---
+    function toggleTint(colorName) {
+        let existingTint = document.getElementById("ca-tint-overlay");
+        if (!existingTint) {
+            tintElement = document.createElement("div");
+            tintElement.id = "ca-tint-overlay";
+            document.body.appendChild(tintElement);
+        } else {
+            tintElement = existingTint;
+        }
+
+        const colors = {
+            "off": "transparent",
+            "blue": "rgba(173, 216, 230, 0.25)",  
+            "green": "rgba(144, 238, 144, 0.25)", 
+            "rose": "rgba(255, 182, 193, 0.25)",  
+            "peach": "rgba(255, 218, 185, 0.25)", 
+            "gray": "rgba(128, 128, 128, 0.25)"   
+        };
+
+        if (colorName && colorName !== "off") {
+            tintElement.style.display = "block";
+            tintElement.style.backgroundColor = colors[colorName] || "transparent";
+        } else {
+            tintElement.style.display = "none";
         }
     }
 
@@ -342,11 +385,9 @@ if (window.__caContentInjected) {
 
     // --- SUMMARY VIEW ---
     function showSummaryOnPage(summaryText) {
-        // Always get fresh body HTML before entering summary mode
         if (!summaryMode) {
             summaryOriginalBody = document.body.innerHTML;
         } else {
-            // If already in summary mode, restore first then re-capture
             document.body.innerHTML = summaryOriginalBody;
             summaryOriginalBody = document.body.innerHTML;
         }
@@ -405,105 +446,5 @@ if (window.__caContentInjected) {
         summaryMode = false;
         summaryOriginalBody = null;
         bionicProcessed = false;
-    }
-}
-
-// --- BROWSER AI SUMMARY ---
-async function generateBrowserAISummary(text, sentenceCount) {
-    try {
-        // Check if window.ai exists
-        if (typeof window.ai === 'undefined') {
-            throw new Error("Browser AI not found.\n\n❌ window.ai is undefined\n\n⚠️ MOST COMMON FIX:\n1. Enable Developer Mode in chrome://extensions/\n2. Restart Chrome Canary completely\n3. Test on a regular webpage (not extension page)\n\nOther requirements:\n• Chrome Canary 127+\n• Prompt API flag enabled\n• Optimization Guide flag enabled\n• Model downloaded from chrome://components/\n• US/UK region\n\n✅ RECOMMENDED: Use Algorithmic method instead");
-        }
-
-        console.log('Browser AI Detection:');
-        console.log('- window.ai exists:', typeof window.ai !== 'undefined');
-        console.log('- window.ai.languageModel exists:', typeof window.ai?.languageModel !== 'undefined');
-        console.log('- Available APIs:', Object.keys(window.ai || {}));
-        console.log('- User Agent:', navigator.userAgent);
-        console.log('- Location:', window.location.href);
-
-        // Use languageModel API (Prompt API) instead of summarizer
-        if (!window.ai.languageModel) {
-            throw new Error("Prompt API (languageModel) not found.\n\n❌ window.ai.languageModel is undefined\n\nThe Prompt API is not available. This could mean:\n\n1. Flag not enabled properly:\n   • chrome://flags/#prompt-api-for-gemini-nano\n   • Set to 'Enabled'\n\n2. Developer Mode not enabled:\n   • chrome://extensions/\n   • Turn ON 'Developer mode'\n\n3. Model not downloaded:\n   • chrome://components/\n   • Update 'Optimization Guide On Device Model'\n\n4. Region restricted:\n   • Only works in US/UK\n   • VPN may not help\n\n✅ Use Algorithmic method - works everywhere!");
-        }
-
-        console.log('Checking languageModel capabilities...');
-        const canUseModel = await window.ai.languageModel.capabilities();
-        console.log('LanguageModel capabilities:', canUseModel);
-
-        if (canUseModel.available === 'no') {
-            throw new Error("Gemini Nano not available.\n\n❌ Status: 'no'\n\nYour browser reports this feature is not available.\n\nPossible reasons:\n• Unsupported hardware\n• Region restriction (not US/UK)\n• API disabled by Google\n• Incompatible browser version\n\n✅ Use Algorithmic method instead");
-        }
-
-        if (canUseModel.available === 'after-download') {
-            throw new Error("Gemini Nano model downloading.\n\n⏳ Status: 'after-download'\n\nThe AI model needs to download:\n\n1. Go to chrome://components/\n2. Find 'Optimization Guide On Device Model'\n3. Click 'Check for update'\n4. Wait 15-30 minutes (~1.7GB download)\n5. Look for version number to appear\n6. Restart Chrome completely\n7. Try again\n\n✅ Use Algorithmic method while waiting");
-        }
-
-        if (canUseModel.available !== 'readily') {
-            throw new Error(`Unexpected status: ${canUseModel.available}\n\nThe API returned an unknown status.\n\n✅ Use Algorithmic method instead`);
-        }
-
-        console.log('✅ LanguageModel is readily available, creating session...');
-
-        // Create a session with the language model
-        const session = await window.ai.languageModel.create({
-            systemPrompt: "You are a helpful assistant that creates concise, bullet-point summaries of articles. Keep summaries factual and well-structured."
-        });
-
-        console.log('✅ Session created successfully');
-
-        // Prepare the prompt based on desired length
-        let lengthInstruction = '';
-        if (sentenceCount <= 5) {
-            lengthInstruction = 'Create a very brief summary with 3-5 key points.';
-        } else if (sentenceCount <= 10) {
-            lengthInstruction = 'Create a concise summary with 5-8 key points.';
-        } else if (sentenceCount <= 15) {
-            lengthInstruction = 'Create a detailed summary with 8-12 key points.';
-        } else {
-            lengthInstruction = 'Create a comprehensive summary with 12-15 key points.';
-        }
-
-        // Limit text length
-        const maxLength = 2500;
-        const textToSummarize = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-
-        const prompt = `${lengthInstruction}
-
-Article text:
-${textToSummarize}
-
-Summary (use bullet points starting with •):`;
-
-        console.log('Sending prompt to model...');
-
-        let summary;
-        try {
-            summary = await session.prompt(prompt);
-            console.log('✅ Summary generated:', summary.substring(0, 100) + '...');
-        } catch (promptError) {
-            session.destroy();
-            throw new Error(`Failed to generate summary.\n\n❌ Error: ${promptError.message}\n\n✅ Try Algorithmic method`);
-        }
-
-        session.destroy();
-
-        // Clean up the response
-        let cleaned = summary.trim();
-        
-        // If the response doesn't start with bullets, try to format it
-        if (!cleaned.includes('•') && !cleaned.includes('*')) {
-            const sentences = cleaned.split(/[.\n]+/).filter(s => s.trim().length > 20);
-            cleaned = sentences.map(s => `• ${s.trim()}`).join('\n\n');
-        } else {
-            cleaned = cleaned.replace(/^\s*\*\s*/gm, '• ');
-        }
-
-        return cleaned;
-
-    } catch (error) {
-        console.error('Browser AI Summary Error:', error);
-        throw error;
     }
 }
