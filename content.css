@@ -1,277 +1,334 @@
 /* --- 1. SIMPLIFY MODE --- */
 .ca-simplified-body {
-    background-color: #f4f7f6 !important;
-    color: #333 !important;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-    line-height: 1.6 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-x: hidden;
+  background-color: #f4f7f6 !important;
+  color: #333 !important;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+}
+
+/* Universal normalized navbar for Simplify Mode */
+.ca-nav-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483645;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.ca-nav-link {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155 !important;
+  background: #f1f5f9;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.ca-nav-link:hover {
+  background: #0078d4;
+  color: #ffffff !important;
+}
+
+.ca-nav-link:active {
+  background: #005fa3;
+  color: #ffffff !important;
 }
 
 .ca-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 50px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 25px rgba(0,0,0,0.05);
-    border-radius: 8px;
-    min-height: 100vh;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 50px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  min-height: 100vh;
 }
 
 .ca-title {
-    font-size: 2.5em;
-    font-weight: 700;
-    color: #111;
-    margin-bottom: 20px;
-    border-bottom: 3px solid #0078d4;
-    padding-bottom: 15px;
-    line-height: 1.2;
+  font-size: 2.5em;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 20px;
+  border-bottom: 3px solid #0078d4;
+  padding-bottom: 15px;
+  line-height: 1.2;
 }
 
 .ca-content p {
-    font-size: 19px;
-    line-height: 1.8;
-    margin-bottom: 1.5em;
-    color: #222;
+  font-size: 19px;
+  line-height: 1.8;
+  margin-bottom: 1.5em;
+  color: #222;
 }
 
-.ca-content h2, .ca-content h3 { margin-top: 1.5em; color: #333; }
-
-.ca-content img, .ca-content video, .ca-content iframe {
-    max-width: 100% !important;
-    height: auto !important;
-    display: block;
-    margin: 30px auto;
-    border-radius: 4px;
+.ca-content h2,
+.ca-content h3 {
+  margin-top: 1.5em;
+  color: #333;
 }
-.ca-content .ad, .ca-content .nav, .ca-content .footer { display: none !important; }
+
+.ca-content img,
+.ca-content video,
+.ca-content iframe {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 30px auto;
+  border-radius: 4px;
+}
+.ca-content .ad,
+.ca-content .nav,
+.ca-content .footer {
+  display: none !important;
+}
 
 /* --- 2. DYSLEXIA FONT --- */
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap");
 
-.ca-dyslexia-mode, .ca-dyslexia-mode * {
-    font-family: 'OpenDyslexic', 'Comic Neue', 'Comic Sans MS', 'Verdana', sans-serif !important;
-    letter-spacing: 0.05em !important;
-    word-spacing: 0.1em !important;
-    line-height: 2.0 !important;
+.ca-dyslexia-mode,
+.ca-dyslexia-mode * {
+  font-family:
+    "OpenDyslexic", "Comic Neue", "Comic Sans MS", "Verdana", sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.1em !important;
+  line-height: 2 !important;
 }
 
 /* --- 3. READING RULER --- */
 #ca-ruler {
-    position: fixed;
-    left: 0;
-    width: 100vw;
-    height: 60px;
-    pointer-events: none;
-    z-index: 2147483647;
-    display: none;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
-    border-top: 2px solid rgba(255, 255, 255, 0.3);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-    transition: top 0.05s linear;
+  position: fixed;
+  left: 0;
+  width: 100vw;
+  height: 60px;
+  pointer-events: none;
+  z-index: 2147483647;
+  display: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  transition: top 0.05s linear;
 }
 
 /* --- 4. BIONIC READING --- */
 .ca-bionic-target {
-    font-weight: inherit;
+  font-weight: inherit;
 }
 .ca-bionic-mode .ca-bionic-target {
-    font-weight: 700 !important;
+  font-weight: 700 !important;
 }
 
 /* --- 5. TEXT TO SPEECH --- */
 .ca-tts-word {
-    display: inline;
+  display: inline;
 }
 .ca-tts-active {
-    background-color: #ffeb3b !important;
-    color: #000 !important;
-    border-radius: 3px;
-    box-shadow: 0 0 0 2px #ffeb3b;
+  background-color: #ffeb3b !important;
+  color: #000 !important;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px #ffeb3b;
 }
 .ca-tts-anim-snappy .ca-tts-active {
-    transition: none !important;
+  transition: none !important;
 }
 .ca-tts-anim-smooth .ca-tts-active {
-    transition: background-color 0.2s ease-in-out, color 0.2s ease !important;
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease !important;
 }
 
 /* --- 6. FOCUS MODE SVG --- */
 #ca-focus-svg {
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
 /* --- 7. SENSORY TINT --- */
 #ca-tint-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 2147483646;
-    pointer-events: none;
-    display: none;
-    transition: background-color 0.2s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483646;
+  pointer-events: none;
+  display: none;
+  transition: background-color 0.2s ease;
 }
 
 /* --- 8. HIGH CONTRAST MODES --- */
 
 /* MODE 1: Dark High Contrast ("The Shield") */
-html.ca-contrast-dark-high, 
+html.ca-contrast-dark-high,
 html.ca-contrast-dark-high body {
-    background-color: #000000 !important;
+  background-color: #000000 !important;
 }
 
 html.ca-contrast-dark-high * {
-    background-color: #000000 !important;
-    color: #FFFF00 !important; /* Neon Yellow Text */
-    border-color: #00FF00 !important; /* Neon Green Borders */
-    text-shadow: none !important;
-    box-shadow: none !important;
-    background-image: none !important; /* Remove background images that cause glare */
+  background-color: #000000 !important;
+  color: #ffff00 !important; /* Neon Yellow Text */
+  border-color: #00ff00 !important; /* Neon Green Borders */
+  text-shadow: none !important;
+  box-shadow: none !important;
+  background-image: none !important; /* Remove background images that cause glare */
 }
 
-html.ca-contrast-dark-high a, 
+html.ca-contrast-dark-high a,
 html.ca-contrast-dark-high a * {
-    color: #00FFFF !important; /* Bright Cyan */
-    text-decoration: underline !important;
+  color: #00ffff !important; /* Bright Cyan */
+  text-decoration: underline !important;
 }
 
-html.ca-contrast-dark-high img, 
-html.ca-contrast-dark-high video, 
+html.ca-contrast-dark-high img,
+html.ca-contrast-dark-high video,
 html.ca-contrast-dark-high iframe {
-    opacity: 0.8 !important;
-    background-color: transparent !important;
+  opacity: 0.8 !important;
+  background-color: transparent !important;
 }
 
-html.ca-contrast-dark-high button, 
-html.ca-contrast-dark-high input, 
-html.ca-contrast-dark-high textarea, 
+html.ca-contrast-dark-high button,
+html.ca-contrast-dark-high input,
+html.ca-contrast-dark-high textarea,
 html.ca-contrast-dark-high select {
-    background-color: #000000 !important;
-    color: #FFFFFF !important;
-    border: 2px solid #00FF00 !important; /* Solid Neon Green Border */
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #00ff00 !important; /* Solid Neon Green Border */
 }
-
 
 /* MODE 2: Light High Contrast ("The Definer") */
-html.ca-contrast-light-high, 
+html.ca-contrast-light-high,
 html.ca-contrast-light-high body {
-    background-color: #FFFFFF !important;
+  background-color: #ffffff !important;
 }
 
 html.ca-contrast-light-high * {
-    background-color: #FFFFFF !important;
-    color: #000000 !important; /* Pure Black Text */
-    border-color: #000000 !important;
-    text-shadow: none !important;
-    box-shadow: none !important;
-    background-image: none !important;
-    font-weight: 600 !important; /* Added weight for definition */
+  background-color: #ffffff !important;
+  color: #000000 !important; /* Pure Black Text */
+  border-color: #000000 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  font-weight: 600 !important; /* Added weight for definition */
 }
 
-html.ca-contrast-light-high a, 
+html.ca-contrast-light-high a,
 html.ca-contrast-light-high a * {
-    color: #00008B !important; /* Dark Blue */
-    text-decoration: underline !important;
-    font-weight: 700 !important;
+  color: #00008b !important; /* Dark Blue */
+  text-decoration: underline !important;
+  font-weight: 700 !important;
 }
 
-html.ca-contrast-light-high button, 
-html.ca-contrast-light-high input, 
+html.ca-contrast-light-high button,
+html.ca-contrast-light-high input,
 html.ca-contrast-light-high textarea {
-    border: 2px solid #000000 !important;
-    background-color: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+  background-color: #ffffff !important;
 }
 
 /* --- 9. SUMMARY VIEW --- */
 .ca-summary-mode {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: #222 !important;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-    margin: 0 !important;
-    padding: 20px !important;
-    min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #222 !important;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  min-height: 100vh;
 }
 
 .ca-summary-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 50px 60px;
-    background: #ffffff;
-    box-shadow: 0 10px 50px rgba(0,0,0,0.15);
-    border-radius: 16px;
-    position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 50px 60px;
+  background: #ffffff;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  position: relative;
 }
 
 .ca-summary-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 3px solid #667eea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 3px solid #667eea;
 }
 
 .ca-summary-title {
-    font-size: 2.5em;
-    font-weight: 700;
-    margin: 0;
-    color: #1a1a2e;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  font-size: 2.5em;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .ca-summary-close-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .ca-summary-close-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 .ca-summary-close-btn:active {
-    transform: translateY(0);
+  transform: translateY(0);
 }
 
 .ca-summary-content {
-    background: #f8f9fa;
-    padding: 30px;
-    border-radius: 12px;
-    border-left: 4px solid #667eea;
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
 }
 
 .ca-summary-text {
-    white-space: pre-wrap;
-    font-size: 18px;
-    line-height: 1.8;
-    color: #2c3e50;
-    margin: 0;
-    font-family: 'Georgia', 'Times New Roman', serif;
+  white-space: pre-wrap;
+  font-size: 18px;
+  line-height: 1.8;
+  color: #2c3e50;
+  margin: 0;
+  font-family: "Georgia", "Times New Roman", serif;
 }
 
 .ca-summary-meta {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 2px dashed #e0e0e0;
-    font-size: 14px;
-    color: #7f8c8d;
-    text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px dashed #e0e0e0;
+  font-size: 14px;
+  color: #7f8c8d;
+  text-align: center;
 }
