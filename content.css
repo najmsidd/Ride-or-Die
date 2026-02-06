@@ -110,10 +110,9 @@
     transition: background-color 0.2s ease;
 }
 
-/* --- 7. HIGH CONTRAST MODES (UPDATED) --- */
+/* --- 7. HIGH CONTRAST MODES --- */
 
 /* MODE 1: Dark High Contrast ("The Shield") */
-/* Targets: Photophobia, Migraines, Autism */
 html.ca-contrast-dark-high, 
 html.ca-contrast-dark-high body {
     background-color: #000000 !important;
@@ -128,14 +127,12 @@ html.ca-contrast-dark-high * {
     background-image: none !important; /* Remove background images that cause glare */
 }
 
-/* Links in Cyan */
 html.ca-contrast-dark-high a, 
 html.ca-contrast-dark-high a * {
     color: #00FFFF !important; /* Bright Cyan */
     text-decoration: underline !important;
 }
 
-/* Preserve visuals but keep them dim */
 html.ca-contrast-dark-high img, 
 html.ca-contrast-dark-high video, 
 html.ca-contrast-dark-high iframe {
@@ -143,7 +140,6 @@ html.ca-contrast-dark-high iframe {
     background-color: transparent !important;
 }
 
-/* Buttons and Inputs */
 html.ca-contrast-dark-high button, 
 html.ca-contrast-dark-high input, 
 html.ca-contrast-dark-high textarea, 
@@ -155,7 +151,6 @@ html.ca-contrast-dark-high select {
 
 
 /* MODE 2: Light High Contrast ("The Definer") */
-/* Targets: Astigmatism, Aging Eyes, Dyslexia */
 html.ca-contrast-light-high, 
 html.ca-contrast-light-high body {
     background-color: #FFFFFF !important;
@@ -171,7 +166,6 @@ html.ca-contrast-light-high * {
     font-weight: 600 !important; /* Added weight for definition */
 }
 
-/* Links in Dark Blue */
 html.ca-contrast-light-high a, 
 html.ca-contrast-light-high a * {
     color: #00008B !important; /* Dark Blue */
@@ -179,10 +173,99 @@ html.ca-contrast-light-high a * {
     font-weight: 700 !important;
 }
 
-/* Inputs */
 html.ca-contrast-light-high button, 
 html.ca-contrast-light-high input, 
 html.ca-contrast-light-high textarea {
     border: 2px solid #000000 !important;
     background-color: #FFFFFF !important;
+}
+
+/* --- 8. SUMMARY VIEW --- */
+.ca-summary-mode {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #222 !important;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    min-height: 100vh;
+}
+
+.ca-summary-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 50px 60px;
+    background: #ffffff;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.15);
+    border-radius: 16px;
+    position: relative;
+}
+
+.ca-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #667eea;
+}
+
+.ca-summary-title {
+    font-size: 2.5em;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a2e;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.ca-summary-close-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ca-summary-close-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.ca-summary-close-btn:active {
+    transform: translateY(0);
+}
+
+.ca-summary-content {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.ca-summary-text {
+    white-space: pre-wrap;
+    font-size: 18px;
+    line-height: 1.8;
+    color: #2c3e50;
+    margin: 0;
+    font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.ca-summary-meta {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px dashed #e0e0e0;
+    font-size: 14px;
+    color: #7f8c8d;
+    text-align: center;
 }

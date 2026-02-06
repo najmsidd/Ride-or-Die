@@ -129,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSummarize.addEventListener('click', () => {
             summaryBox.classList.remove('hidden');
             summaryText.value = "Analyzing...";
+            
             const verbosity = parseInt(slider.value, 10);
 
             chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
@@ -140,12 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     chrome.tabs.sendMessage(tabs[0].id, { 
                         action: "generate_summary", 
+                        method: 'algorithmic',
                         length: verbosity 
                     }, (response) => {
                         if (response && response.summary) {
                             summaryText.value = response.summary;
                         } else {
-                            summaryText.value = "Could not generate summary.";
+                            summaryText.value = "Could not generate summary. Please try again.";
                         }
                     });
                 });

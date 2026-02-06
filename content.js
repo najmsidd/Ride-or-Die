@@ -1,24 +1,26 @@
-// --- GUARD CLAUSE: Prevent logical double-execution ---
-if (!window.ca_content_active) {
-    window.ca_content_active = true;
-
-    // ==================================================
-    //  CONTEXT AWARE: CORE LOGIC
-    // ==================================================
+if (window.__caContentInjected) {
+    // Already injected, skip
+} else {
+    window.__caContentInjected = true;
 
     // State Variables
-    var originalBody = null;
-    var articleText = ""; 
-    var bionicProcessed = false; 
+    let originalBody = null;
+    let articleText = ""; 
+    let bionicProcessed = false; 
 
-    // Global references for UI elements
-    var rulerElement = null;
-    var tintElement = null; 
+    // Summary View State
+    let summaryMode = false;
+    let summaryOriginalBody = null;
+    let lastState = { simplify: false, ruler: false, dyslexia: false, bionic: false, tts: false, tint: "off", contrast: "off" };
+
+    // Global references
+    let rulerElement = null;
+    let tintElement = null;
 
     // TTS Variables
-    var ttsUtterance = null;
-    var ttsWordMap = []; 
-    var isTTSActive = false;
+    let ttsUtterance = null;
+    let ttsWordMap = []; 
+    let isTTSActive = false;
 
     // 1. LISTEN FOR MESSAGES
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -26,11 +28,26 @@ if (!window.ca_content_active) {
             applyState(request.state);
         } 
         else if (request.action === "generate_summary") {
-            const sourceText = articleText || document.body.innerText;
+            let sourceText;
+            
+            if (summaryMode) {
+                restoreSummaryView();
+            }
+            
+            const contentContainer = document.querySelector('.ca-content');
+            if (contentContainer) {
+                sourceText = contentContainer.innerText;
+            } else if (articleText) {
+                sourceText = articleText;
+            } else {
+                sourceText = document.body.innerText;
+            }
+            
             const cleanSource = sourceText.split('\n').filter(line => line.trim().length > 40).join(' ');
 
             if (window.Summarizer) {
                 const result = window.Summarizer.generate(cleanSource, request.length);
+                showSummaryOnPage(result);
                 sendResponse({ summary: result });
             } else {
                 sendResponse({ summary: "Error: Summarizer library not loaded." });
@@ -40,24 +57,28 @@ if (!window.ca_content_active) {
             handleTTSControl(request.command, request.settings);
         }
         else if (request.action === "tts_update_settings") {
-            if(isTTSActive) {
-                document.body.classList.remove('ca-tts-anim-snappy', 'ca-tts-anim-smooth');
-                document.body.classList.add(`ca-tts-anim-${request.settings.anim}`);
-            }
+             if(isTTSActive) {
+                 document.body.classList.remove('ca-tts-anim-snappy', 'ca-tts-anim-smooth');
+                 document.body.classList.add(`ca-tts-anim-${request.settings.anim}`);
+             }
         }
-        return true;
     });
 
     // 2. APPLY STATE
     function applyState(state) {
-        // --- Feature 1: Simplify Mode ---
+        lastState = state || lastState;
+
+        if (summaryMode && state.simplify) {
+            restoreSummaryView();
+        }
+
+        // Feature 1: Simplify Mode
         if (state.simplify) {
             if (!originalBody) originalBody = document.body.innerHTML;
 
             if (!articleText) {
                 const docClone = document.cloneNode(true);
                 
-                // Rescue Forms
                 let rescuedForm = null;
                 const form = docClone.querySelector('form');
                 if (form && form.querySelectorAll('input, select, textarea').length > 0) {
@@ -96,34 +117,34 @@ if (!window.ca_content_active) {
                 } catch(e) { console.error(e); }
             }
         } else {
-            if (originalBody) {
+            if (originalBody && !summaryMode) {
                 document.body.innerHTML = originalBody;
                 document.body.classList.remove("ca-simplified-body");
                 originalBody = null;
                 articleText = "";
                 bionicProcessed = false;
-                tintElement = null; 
+                tintElement = null;
                 if(isTTSActive) stopTTS();
             }
         }
 
-        // --- Feature 2: Dyslexia Font ---
+        // Feature 2: Dyslexia Font
         if (state.dyslexia) document.body.classList.add("ca-dyslexia-mode");
         else document.body.classList.remove("ca-dyslexia-mode");
 
-        // --- Feature 3: Bionic Reading ---
+        // Feature 3: Bionic Reading
         toggleBionic(state.bionic);
 
-        // --- Feature 4: Reading Ruler ---
+        // Feature 4: Reading Ruler
         toggleRuler(state.ruler);
         
-        // --- Feature 5: Sensory Tint ---
+        // Feature 5: Sensory Tint
         toggleTint(state.tint);
 
-        // --- Feature 6: Contrast Mode ---
+        // Feature 6: Contrast Mode
         toggleContrast(state.contrast);
 
-        // --- Feature 7: TTS ---
+        // Feature 7: TTS
         if (state.tts) {
             isTTSActive = true; 
         } else {
@@ -132,9 +153,8 @@ if (!window.ca_content_active) {
         }
     }
 
-    // --- CONTRAST LOGIC (UPDATED) ---
+    // --- CONTRAST LOGIC ---
     function toggleContrast(mode) {
-        // Remove existing contrast classes
         document.documentElement.classList.remove(
             'ca-contrast-dark-high', 
             'ca-contrast-light-high'
@@ -221,7 +241,7 @@ if (!window.ca_content_active) {
                     if (node.parentNode.classList.contains('ca-bionic-target')) return NodeFilter.FILTER_REJECT;
                     if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'].includes(node.parentNode.tagName)) return NodeFilter.FILTER_REJECT;
                     if (document.querySelector('.ca-tts-word') && !node.parentNode.classList.contains('ca-tts-word')) {
-                        return NodeFilter.FILTER_SKIP;
+                         return NodeFilter.FILTER_SKIP;
                     }
                     if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
                     return NodeFilter.FILTER_ACCEPT;
@@ -273,7 +293,7 @@ if (!window.ca_content_active) {
     function prepareTTS() {
         const root = document.querySelector('.ca-content') || document.body;
         if (document.querySelector('.ca-bionic-target')) stripBionic();
-        if (root.querySelector('.ca-tts-word')) return; 
+        if (root.querySelector('.ca-tts-word')) return;
 
         const walker = document.createTreeWalker(
             root, NodeFilter.SHOW_TEXT,
@@ -325,21 +345,21 @@ if (!window.ca_content_active) {
             setTimeout(() => {
                 const spans = Array.from(document.querySelectorAll('.ca-tts-word'));
                 if (spans.length === 0) { alert("ContextAware: No text found."); return; }
+                
                 let fullText = "";
                 ttsWordMap = [];
                 spans.forEach(span => {
-                    ttsWordMap.push({ 
-                        start: fullText.length, 
-                        end: fullText.length + span.textContent.length,
-                        element: span 
-                    });
+                    ttsWordMap.push({ start: fullText.length, end: fullText.length + span.textContent.length, element: span });
                     fullText += span.textContent + " "; 
                 });
+
                 ttsUtterance = new SpeechSynthesisUtterance(fullText);
                 ttsUtterance.rate = settings.rate || 1;
                 ttsUtterance.pitch = settings.pitch || 1;
+                
                 document.body.classList.remove('ca-tts-anim-snappy', 'ca-tts-anim-smooth');
                 document.body.classList.add(`ca-tts-anim-${settings.anim}`);
+
                 ttsUtterance.onboundary = (event) => {
                     if (event.name === 'word') {
                         const charIndex = event.charIndex;
@@ -361,5 +381,70 @@ if (!window.ca_content_active) {
     function stopTTS() {
         window.speechSynthesis.cancel();
         document.querySelectorAll('.ca-tts-active').forEach(el => el.classList.remove('ca-tts-active'));
+    }
+
+    // --- SUMMARY VIEW ---
+    function showSummaryOnPage(summaryText) {
+        if (!summaryMode) {
+            summaryOriginalBody = document.body.innerHTML;
+        } else {
+            document.body.innerHTML = summaryOriginalBody;
+            summaryOriginalBody = document.body.innerHTML;
+        }
+        
+        summaryMode = true;
+
+        if (isTTSActive) stopTTS();
+
+        document.body.classList.add("ca-summary-mode");
+        document.body.innerHTML = `
+            <div class="ca-summary-container">
+                <div class="ca-summary-header">
+                    <h1 class="ca-summary-title">📝 Article Summary</h1>
+                    <button class="ca-summary-close-btn" id="ca-close-summary">
+                        <span>✕</span>
+                        <span>Close Summary</span>
+                    </button>
+                </div>
+                <div class="ca-summary-content">
+                    <pre class="ca-summary-text"></pre>
+                </div>
+                <div class="ca-summary-meta">
+                    Generated by ContextAware • AI-powered text summarization
+                </div>
+            </div>
+        `;
+
+        const summaryNode = document.querySelector('.ca-summary-text');
+        if (summaryNode) summaryNode.textContent = summaryText;
+
+        const closeBtn = document.getElementById('ca-close-summary');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                restoreSummaryView();
+                chrome.storage.local.get(['caSettings'], (result) => {
+                    if (result.caSettings) {
+                        applyState(result.caSettings);
+                    }
+                });
+            });
+        }
+
+        bionicProcessed = false;
+        if (lastState?.dyslexia) document.body.classList.add("ca-dyslexia-mode");
+        else document.body.classList.remove("ca-dyslexia-mode");
+
+        toggleBionic(!!lastState?.bionic);
+        toggleRuler(!!lastState?.ruler);
+    }
+
+    function restoreSummaryView() {
+        if (summaryOriginalBody) {
+            document.body.innerHTML = summaryOriginalBody;
+        }
+        document.body.classList.remove("ca-summary-mode");
+        summaryMode = false;
+        summaryOriginalBody = null;
+        bionicProcessed = false;
     }
 }
