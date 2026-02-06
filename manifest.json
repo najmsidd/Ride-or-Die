@@ -23,8 +23,8 @@
   "commands": {
     "toggle-reader": {
       "suggested_key": {
-        "default": "Alt+R",
-        "mac": "Alt+R"
+        "default": "Ctrl+Shift+Q",
+        "mac": "MacCtrl+Q"
       },
       "description": "Toggle Reader View"
     }
