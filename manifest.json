@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ContextAware: Focus & Accessibility",
-  "version": "1.0",
-  "description": "Reduces cognitive load with Reader View, Line Focus, and Summarization.",
+  "version": "4.0",
+  "description": "Reduces cognitive load with Reader View, Focus Mode, Line Focus, Sensory Tint, and Summarization.",
   "permissions": ["activeTab", "scripting", "storage", "commands"],
   "background": {
     "service_worker": "background.js"
@@ -21,6 +21,13 @@
     "128": "icons/icon128.png"
   },
   "commands": {
+    "toggle-focus": {
+      "suggested_key": {
+        "default": "Alt+Shift+F",
+        "mac": "Alt+Shift+F"
+      },
+      "description": "Toggle Interactive Focus Mode"
+    },
     "toggle-reader": {
       "suggested_key": {
         "default": "Ctrl+Shift+Q",

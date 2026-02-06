@@ -26,6 +26,19 @@
         <div class="control-card">
             <div class="control-row">
                 <div class="label-group">
+                    <span class="label-title">🎯 Focus Mode</span>
+                    <span class="label-desc">Highlight buttons & inputs</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-focus">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="control-card">
+            <div class="control-row">
+                <div class="label-group">
                     <span class="label-title">📏 Reading Ruler</span>
                     <span class="label-desc">Highlight current line</span>
                 </div>
@@ -136,15 +149,13 @@
         <div class="control-card">
             <div class="label-group" style="margin-bottom: 10px;">
                 <span class="label-title">📝 Quick Summary</span>
-                <span class="label-desc">Adjust summary length (3-25 sentences)</span>
+                <span class="label-desc">Adjust summary length</span>
             </div>
             
-            <div id="length-slider-container">
-                <div class="slider-container">
-                    <span class="slider-label">Brief</span>
-                    <input type="range" id="summary-slider" min="3" max="25" value="10" class="range-slider">
-                    <span class="slider-label">Detailed</span>
-                </div>
+            <div class="slider-container">
+                <span class="slider-label">Brief</span>
+                <input type="range" id="summary-slider" min="3" max="25" value="10" class="range-slider">
+                <span class="slider-label">Detailed</span>
             </div>
 
             <button id="btn-summarize" class="action-btn">Generate Summary</button>

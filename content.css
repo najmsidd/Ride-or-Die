@@ -97,7 +97,13 @@
     transition: background-color 0.2s ease-in-out, color 0.2s ease !important;
 }
 
-/* --- 6. SENSORY TINT --- */
+/* --- 6. FOCUS MODE SVG --- */
+#ca-focus-svg {
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* --- 7. SENSORY TINT --- */
 #ca-tint-overlay {
     position: fixed;
     top: 0;
@@ -110,7 +116,7 @@
     transition: background-color 0.2s ease;
 }
 
-/* --- 7. HIGH CONTRAST MODES --- */
+/* --- 8. HIGH CONTRAST MODES --- */
 
 /* MODE 1: Dark High Contrast ("The Shield") */
 html.ca-contrast-dark-high, 
@@ -180,7 +186,7 @@ html.ca-contrast-light-high textarea {
     background-color: #FFFFFF !important;
 }
 
-/* --- 8. SUMMARY VIEW --- */
+/* --- 9. SUMMARY VIEW --- */
 .ca-summary-mode {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: #222 !important;
