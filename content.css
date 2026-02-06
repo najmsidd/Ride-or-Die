@@ -1,117 +1,365 @@
 /* --- 1. SIMPLIFY MODE (Clean White Paper) --- */
 .ca-simplified-body {
-    background-color: #f4f7f6 !important;
-    color: #333 !important;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-    line-height: 1.6 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-x: hidden;
+  background-color: #f4f7f6 !important;
+  color: #333 !important;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
 }
 
 .ca-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 50px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 25px rgba(0,0,0,0.05);
-    border-radius: 8px;
-    min-height: 100vh;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 50px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  min-height: 100vh;
 }
 
 .ca-title {
-    font-size: 2.5em;
-    font-weight: 700;
-    color: #111;
-    margin-bottom: 20px;
-    border-bottom: 3px solid #0078d4;
-    padding-bottom: 15px;
-    line-height: 1.2;
+  font-size: 2.5em;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 20px;
+  border-bottom: 3px solid #0078d4;
+  padding-bottom: 15px;
+  line-height: 1.2;
 }
 
 .ca-content p {
-    font-size: 19px;
-    line-height: 1.8;
-    margin-bottom: 1.5em;
-    color: #222;
+  font-size: 19px;
+  line-height: 1.8;
+  margin-bottom: 1.5em;
+  color: #222;
 }
 
-.ca-content h2, .ca-content h3 { margin-top: 1.5em; color: #333; }
+.ca-content h2,
+.ca-content h3 {
+  margin-top: 1.5em;
+  color: #333;
+}
 
 /* Clean Media */
-.ca-content img, .ca-content video, .ca-content iframe {
-    max-width: 100% !important;
-    height: auto !important;
-    display: block;
-    margin: 30px auto;
-    border-radius: 4px;
+.ca-content img,
+.ca-content video,
+.ca-content iframe {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 30px auto;
+  border-radius: 4px;
 }
-.ca-content .ad, .ca-content .nav, .ca-content .footer { display: none !important; }
+.ca-content .ad,
+.ca-content .nav,
+.ca-content .footer {
+  display: none !important;
+}
+
+/* Rescued Form Styling */
+.ca-rescued-form {
+  margin-top: 40px;
+  padding: 30px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+}
+
+.ca-rescued-form h3 {
+  color: #0078d4;
+  margin-top: 0;
+  font-size: 1.5em;
+}
+
+.ca-rescued-form form {
+  margin-top: 20px;
+}
+
+.ca-rescued-form input,
+.ca-rescued-form textarea,
+.ca-rescued-form select {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ca-rescued-form input:hover,
+.ca-rescued-form textarea:hover,
+.ca-rescued-form select:hover {
+  border-color: #0078d4 !important;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+}
 
 /* --- 2. DYSLEXIA FONT STACK --- */
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap");
 
-.ca-dyslexia-mode, .ca-dyslexia-mode * {
-    font-family: 'OpenDyslexic', 'Comic Neue', 'Comic Sans MS', 'Verdana', sans-serif !important;
-    letter-spacing: 0.05em !important;
-    word-spacing: 0.1em !important;
-    line-height: 2.0 !important;
+.ca-dyslexia-mode,
+.ca-dyslexia-mode * {
+  font-family:
+    "OpenDyslexic", "Comic Neue", "Comic Sans MS", "Verdana", sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.1em !important;
+  line-height: 2 !important;
 }
 
 /* --- 3. READING RULER (Spotlight) --- */
 #ca-ruler {
-    position: fixed;
-    left: 0;
-    width: 100vw;
-    height: 60px;
-    pointer-events: none; /* Clicks pass through */
-    z-index: 2147483647;
-    display: none;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); /* Dims rest of screen */
-    border-top: 2px solid rgba(255, 255, 255, 0.3);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-    transition: top 0.05s linear;
+  position: fixed;
+  left: 0;
+  width: 100vw;
+  height: 60px;
+  pointer-events: none; /* Clicks pass through */
+  z-index: 2147483647;
+  display: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); /* Dims rest of screen */
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  transition: top 0.05s linear;
 }
 
 /* --- 4. BIONIC READING --- */
 .ca-bionic-target {
-    font-weight: inherit;
+  font-weight: inherit;
 }
 .ca-bionic-mode .ca-bionic-target {
-    font-weight: 700 !important;
+  font-weight: 700 !important;
 }
 
 /* --- 5. TEXT TO SPEECH (TTS) --- */
-.ca-tts-word { display: inline; }
-
-.ca-tts-active {
-    background-color: #ffeb3b !important;
-    color: #000 !important;
-    border-radius: 3px;
-    box-shadow: 0 0 0 2px #ffeb3b;
+.ca-tts-word {
+  display: inline;
 }
 
-.ca-tts-anim-snappy .ca-tts-active { transition: none !important; }
-.ca-tts-anim-smooth .ca-tts-active { transition: background-color 0.2s ease-in-out, color 0.2s ease !important; }
+.ca-tts-active {
+  background-color: #ffeb3b !important;
+  color: #000 !important;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px #ffeb3b;
+}
+
+.ca-tts-anim-snappy .ca-tts-active {
+  transition: none !important;
+}
+.ca-tts-anim-smooth .ca-tts-active {
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease !important;
+}
 
 /* --- 6. AUTO-SAVE TOAST (NEW) --- */
 #ca-restore-toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #28a745; /* Green Success */
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    z-index: 2147483647;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    animation: caSlideIn 0.5s ease-out;
-    transition: opacity 0.5s ease;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #28a745; /* Green Success */
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 2147483647;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+  animation: caSlideIn 0.5s ease-out;
+  transition: opacity 0.5s ease;
 }
 
 @keyframes caSlideIn {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --- 7. LINEAR FORM WIZARD (TYPEFORM-STYLE) --- */
+.ca-wizard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 2147483646;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: caFadeIn 0.3s ease-out;
+}
+
+@keyframes caFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ca-wizard-card {
+  background: white;
+  border-radius: 16px;
+  padding: 60px 80px;
+  max-width: 700px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  animation: caSlideUp 0.4s ease-out;
+}
+
+@keyframes caSlideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ca-wizard-question {
+  font-size: 28px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 10px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.ca-wizard-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ca-wizard-input-container input,
+.ca-wizard-input-container textarea,
+.ca-wizard-input-container select {
+  font-size: 24px !important;
+  padding: 20px !important;
+  border: 2px solid #ddd !important;
+  border-radius: 8px !important;
+  font-family: "Segoe UI", sans-serif !important;
+  transition: border-color 0.2s ease !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ca-wizard-input-container input:focus,
+.ca-wizard-input-container textarea:focus,
+.ca-wizard-input-container select:focus {
+  outline: none !important;
+  border-color: #0078d4 !important;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1) !important;
+}
+
+.ca-wizard-input-container textarea {
+  min-height: 120px !important;
+  resize: vertical !important;
+}
+
+.ca-wizard-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.ca-wizard-btn {
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.ca-wizard-btn-prev {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.ca-wizard-btn-prev:hover {
+  background: #e0e0e0;
+}
+
+.ca-wizard-btn-prev:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ca-wizard-btn-next {
+  background: #0078d4;
+  color: white;
+}
+
+.ca-wizard-btn-next:hover {
+  background: #005a9e;
+}
+
+.ca-wizard-btn-finish {
+  background: #28a745;
+  color: white;
+}
+
+.ca-wizard-btn-finish:hover {
+  background: #218838;
+}
+
+.ca-wizard-close {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ca-wizard-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.ca-wizard-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #0078d4, #00bcf2);
+  transition: width 0.3s ease;
+  border-radius: 0 3px 0 0;
+}
+
+.ca-wizard-counter {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  font-weight: 500;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* Placeholder styling for the original form location */
+.ca-wizard-placeholder {
+  display: inline-block;
+  visibility: hidden;
 }

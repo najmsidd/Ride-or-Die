@@ -11,6 +11,13 @@ let ttsUtterance = null;
 let ttsWordMap = []; 
 let isTTSActive = false;
 
+// Wizard Variables
+let wizardActive = false;
+let wizardFields = [];
+let currentFieldIndex = 0;
+let wizardOverlay = null;
+let fieldPlaceholders = new Map(); // Store original positions
+
 // --- AUTO-SAVE CONSTANTS (NEW) ---
 const PAGE_KEY = 'ca_save_' + window.location.href;
 
@@ -80,6 +87,9 @@ function applyState(state) {
                         htmlPayload += `
                             <div class="ca-rescued-form">
                                 <h3>Interactive Form Detected</h3>
+                                <p style="color: #666; font-size: 14px; margin-top: -10px; margin-bottom: 15px;">
+                                    💡 <strong>Tip:</strong> Click any input field to activate the Linear Form Wizard for a focused, one-question-at-a-time experience!
+                                </p>
                                 ${rescuedForm}
                             </div>
                         `;
@@ -93,6 +103,9 @@ function applyState(state) {
                     // Re-run restoration because Simplify Mode replaced the DOM.
                     // This ensures text typed BEFORE clicking simplify isn't lost.
                     setTimeout(restoreFormData, 100);
+
+                    // Initialize Form Wizard for rescued forms
+                    setTimeout(initFormWizard, 150);
 
                     // Reset flags
                     bionicProcessed = false; 
@@ -442,4 +455,301 @@ function showRestoreToast() {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 500);
     }, 4000);
+}
+
+// --- LINEAR FORM WIZARD ---
+
+function initFormWizard() {
+    // Find the rescued form container
+    const rescuedForm = document.querySelector('.ca-rescued-form');
+    if (!rescuedForm) return;
+
+    // Attach click listener to all form inputs
+    rescuedForm.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target.matches('input, textarea, select') && !wizardActive) {
+            // Don't activate for submit buttons or hidden fields
+            if (target.type === 'submit' || target.type === 'hidden' || target.type === 'button') return;
+            
+            e.preventDefault();
+            activateWizard(target);
+        }
+    });
+}
+
+function activateWizard(clickedField) {
+    wizardActive = true;
+    
+    // Collect all focusable fields from the form
+    const rescuedForm = document.querySelector('.ca-rescued-form');
+    const allFields = Array.from(rescuedForm.querySelectorAll('input, textarea, select'));
+    
+    // Filter out non-interactive fields
+    wizardFields = allFields.filter(field => {
+        const type = field.type;
+        return type !== 'submit' && type !== 'button' && type !== 'hidden' && type !== 'reset';
+    });
+
+    if (wizardFields.length === 0) {
+        wizardActive = false;
+        return;
+    }
+
+    // Find the index of the clicked field
+    currentFieldIndex = wizardFields.indexOf(clickedField);
+    if (currentFieldIndex === -1) currentFieldIndex = 0;
+
+    // Create the wizard overlay
+    createWizardOverlay();
+    
+    // Show the first (or clicked) field
+    showCurrentField();
+}
+
+function createWizardOverlay() {
+    // Create overlay container
+    wizardOverlay = document.createElement('div');
+    wizardOverlay.className = 'ca-wizard-overlay';
+    
+    // Create close button
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'ca-wizard-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.onclick = exitWizard;
+    
+    // Create counter
+    const counter = document.createElement('div');
+    counter.className = 'ca-wizard-counter';
+    counter.id = 'ca-wizard-counter';
+    
+    // Create main card
+    const card = document.createElement('div');
+    card.className = 'ca-wizard-card';
+    
+    // Create question label
+    const question = document.createElement('div');
+    question.className = 'ca-wizard-question';
+    question.id = 'ca-wizard-question';
+    
+    // Create input container
+    const inputContainer = document.createElement('div');
+    inputContainer.className = 'ca-wizard-input-container';
+    inputContainer.id = 'ca-wizard-input';
+    
+    // Create navigation buttons
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'ca-wizard-buttons';
+    
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'ca-wizard-btn ca-wizard-btn-prev';
+    prevBtn.textContent = '← Previous';
+    prevBtn.id = 'ca-wizard-prev';
+    prevBtn.onclick = showPreviousField;
+    
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'ca-wizard-btn ca-wizard-btn-next';
+    nextBtn.textContent = 'Next →';
+    nextBtn.id = 'ca-wizard-next';
+    nextBtn.onclick = showNextField;
+    
+    buttonContainer.appendChild(prevBtn);
+    buttonContainer.appendChild(nextBtn);
+    
+    // Create progress bar
+    const progressBar = document.createElement('div');
+    progressBar.className = 'ca-wizard-progress';
+    progressBar.id = 'ca-wizard-progress';
+    
+    // Assemble the wizard
+    card.appendChild(question);
+    card.appendChild(inputContainer);
+    card.appendChild(buttonContainer);
+    
+    wizardOverlay.appendChild(closeBtn);
+    wizardOverlay.appendChild(counter);
+    wizardOverlay.appendChild(card);
+    wizardOverlay.appendChild(progressBar);
+    
+    document.body.appendChild(wizardOverlay);
+    
+    // Bind Enter key
+    wizardOverlay.addEventListener('keydown', handleWizardKeydown);
+}
+
+function handleWizardKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        const activeElement = document.activeElement;
+        // Don't trigger on textarea (allow line breaks)
+        if (activeElement.tagName === 'TEXTAREA') return;
+        
+        e.preventDefault();
+        showNextField();
+    }
+}
+
+function showCurrentField() {
+    const field = wizardFields[currentFieldIndex];
+    
+    // Create placeholder if it doesn't exist
+    if (!fieldPlaceholders.has(field)) {
+        const placeholder = document.createElement('span');
+        placeholder.className = 'ca-wizard-placeholder';
+        field.parentNode.insertBefore(placeholder, field);
+        fieldPlaceholders.set(field, placeholder);
+    }
+    
+    // Get field label/question
+    const label = getFieldLabel(field);
+    
+    // Update question text
+    document.getElementById('ca-wizard-question').textContent = label;
+    
+    // Update counter
+    document.getElementById('ca-wizard-counter').textContent = 
+        `Question ${currentFieldIndex + 1} of ${wizardFields.length}`;
+    
+    // Teleport the field to the wizard
+    const inputContainer = document.getElementById('ca-wizard-input');
+    inputContainer.innerHTML = '';
+    inputContainer.appendChild(field);
+    
+    // Focus the field
+    setTimeout(() => field.focus(), 100);
+    
+    // Update button states
+    const prevBtn = document.getElementById('ca-wizard-prev');
+    const nextBtn = document.getElementById('ca-wizard-next');
+    
+    prevBtn.disabled = currentFieldIndex === 0;
+    
+    // Change last button to "Finish"
+    if (currentFieldIndex === wizardFields.length - 1) {
+        nextBtn.textContent = 'Finish ✓';
+        nextBtn.className = 'ca-wizard-btn ca-wizard-btn-finish';
+    } else {
+        nextBtn.textContent = 'Next →';
+        nextBtn.className = 'ca-wizard-btn ca-wizard-btn-next';
+    }
+    
+    // Update progress bar
+    updateProgressBar();
+}
+
+function getFieldLabel(field) {
+    // Try to find associated label
+    if (field.id) {
+        const label = document.querySelector(`label[for="${field.id}"]`);
+        if (label) return label.textContent.trim();
+    }
+    
+    // Try parent label
+    const parentLabel = field.closest('label');
+    if (parentLabel) {
+        const clone = parentLabel.cloneNode(true);
+        // Remove the input from the clone to get just the label text
+        const inputClone = clone.querySelector('input, textarea, select');
+        if (inputClone) inputClone.remove();
+        const text = clone.textContent.trim();
+        if (text) return text;
+    }
+    
+    // Try placeholder
+    if (field.placeholder) return field.placeholder;
+    
+    // Try name attribute
+    if (field.name) {
+        return field.name.replace(/[-_]/g, ' ')
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim();
+    }
+    
+    // Fallback
+    return `Field ${currentFieldIndex + 1}`;
+}
+
+function showNextField() {
+    if (currentFieldIndex >= wizardFields.length - 1) {
+        // On the last field - finish
+        exitWizard();
+        return;
+    }
+    
+    // Return current field to its placeholder
+    returnFieldToOriginalPosition();
+    
+    // Move to next field
+    currentFieldIndex++;
+    showCurrentField();
+}
+
+function showPreviousField() {
+    if (currentFieldIndex <= 0) return;
+    
+    // Return current field to its placeholder
+    returnFieldToOriginalPosition();
+    
+    // Move to previous field
+    currentFieldIndex--;
+    showCurrentField();
+}
+
+function returnFieldToOriginalPosition() {
+    const field = wizardFields[currentFieldIndex];
+    const placeholder = fieldPlaceholders.get(field);
+    
+    if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.insertBefore(field, placeholder);
+    }
+}
+
+function updateProgressBar() {
+    // Calculate progress based on filled fields
+    let filledCount = 0;
+    
+    wizardFields.forEach(field => {
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            if (field.checked) filledCount++;
+        } else if (field.value && field.value.trim().length > 0) {
+            filledCount++;
+        }
+    });
+    
+    const percentage = (filledCount / wizardFields.length) * 100;
+    const progressBar = document.getElementById('ca-wizard-progress');
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+    }
+}
+
+function exitWizard() {
+    // Return current field to original position
+    returnFieldToOriginalPosition();
+    
+    // Return all remaining fields to their positions
+    wizardFields.forEach(field => {
+        const placeholder = fieldPlaceholders.get(field);
+        if (placeholder && placeholder.parentNode) {
+            placeholder.parentNode.insertBefore(field, placeholder);
+        }
+    });
+    
+    // Remove all placeholders
+    fieldPlaceholders.forEach(placeholder => {
+        if (placeholder.parentNode) {
+            placeholder.remove();
+        }
+    });
+    
+    // Clear state
+    fieldPlaceholders.clear();
+    wizardFields = [];
+    currentFieldIndex = 0;
+    wizardActive = false;
+    
+    // Remove overlay
+    if (wizardOverlay && wizardOverlay.parentNode) {
+        wizardOverlay.remove();
+    }
+    wizardOverlay = null;
 }
