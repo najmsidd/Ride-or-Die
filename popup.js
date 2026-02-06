@@ -21,6 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById('summary-slider');
     const summaryText = document.getElementById('summary-text');
     const summaryBox = document.getElementById('summary-result');
+    const aiHelpLink = document.getElementById('ai-help-link');
+    const checkAiBtn = document.getElementById('check-ai-btn');
+    const aiStatus = document.getElementById('ai-status');
+    const aiRadio = document.getElementById('ai-radio');
 
     // --- Init ---
     // Force unchecked visually on load to prevent flashes
@@ -106,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSummarize.addEventListener('click', () => {
             summaryBox.classList.remove('hidden');
             summaryText.value = "Analyzing...";
+            
             const verbosity = parseInt(slider.value, 10);
 
             chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
@@ -117,16 +122,205 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     chrome.tabs.sendMessage(tabs[0].id, { 
                         action: "generate_summary", 
+                        method: 'algorithmic',
                         length: verbosity 
                     }, (response) => {
                         if (response && response.summary) {
                             summaryText.value = response.summary;
                         } else {
-                            summaryText.value = "Could not generate summary.";
+                            summaryText.value = "Could not generate summary. Please try again.";
                         }
                     });
                 });
             });
+        });
+    }
+
+    // Check Browser AI availability
+    if (checkAiBtn) {
+        checkAiBtn.addEventListener('click', () => {
+            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+                chrome.scripting.executeScript({
+                    target: { tabId: tabs[0].id },
+                    func: async () => {
+                        try {
+                            const result = {
+                                windowAi: typeof window.ai !== 'undefined',
+                                aiKeys: window.ai ? Object.keys(window.ai) : [],
+                                hasSummarizer: typeof window.ai?.summarizer !== 'undefined',
+                                hasLanguageModel: typeof window.ai?.languageModel !== 'undefined',
+                                available: false,
+                                reason: 'unknown',
+                                details: ''
+                            };
+
+                            if (!window.ai) {
+                                result.reason = 'no-window-ai';
+                                result.details = 'window.ai is undefined. Enable Prompt API flag and restart Chrome.';
+                                return result;
+                            }
+
+                            // Check for languageModel (Prompt API) - this is what you actually have
+                            if (window.ai.languageModel) {
+                                try {
+                                    const caps = await window.ai.languageModel.capabilities();
+                                    result.reason = caps.available;
+                                    result.available = caps.available === 'readily';
+                                    result.details = `Prompt API (languageModel) available. Status: ${caps.available}`;
+                                    return result;
+                                } catch (error) {
+                                    result.reason = 'error';
+                                    result.details = `languageModel exists but error: ${error.message}`;
+                                    return result;
+                                }
+                            }
+
+                            // Summarizer API check (probably not available)
+                            if (!window.ai.summarizer) {
+                                result.reason = 'no-summarizer';
+                                result.details = `Summarizer API not available. Found APIs: ${result.aiKeys.join(', ')}. Using Prompt API instead.`;
+                                result.available = result.hasLanguageModel; // Mark as available if we have languageModel
+                                return result;
+                            }
+
+                            const caps = await window.ai.summarizer.capabilities();
+                            result.reason = caps.available;
+                            result.available = caps.available === 'readily';
+                            result.details = JSON.stringify(caps);
+                            
+                            return result;
+                        } catch (error) {
+                            return { 
+                                available: false, 
+                                reason: 'error', 
+                                details: error.message,
+                                windowAi: typeof window.ai !== 'undefined',
+                                aiKeys: window.ai ? Object.keys(window.ai) : [],
+                                hasLanguageModel: typeof window.ai?.languageModel !== 'undefined'
+                            };
+                        }
+                    }
+                }, (results) => {
+                    if (results && results[0] && results[0].result) {
+                        const result = results[0].result;
+                        aiStatus.style.display = 'block';
+                        
+                        console.log('Browser AI Check Result:', result);
+                        
+                        if (result.available || result.hasLanguageModel) {
+                            aiStatus.style.background = '#d4edda';
+                            aiStatus.style.color = '#155724';
+                            aiStatus.textContent = result.hasLanguageModel ? 
+                                '✅ Browser AI (Prompt API) is available!' : 
+                                '✅ Browser AI is available!';
+                            aiRadio.disabled = false;
+                        } else {
+                            aiStatus.style.background = '#fff3cd';
+                            aiStatus.style.color = '#856404';
+                            
+                            let message = '❌ Not Available: ';
+                            
+                            switch(result.reason) {
+                                case 'no-window-ai':
+                                    message += 'Enable Prompt API flag in chrome://flags/ and restart.';
+                                    break;
+                                case 'no-summarizer':
+                                    if (result.hasLanguageModel) {
+                                        message = '✅ Using Prompt API (languageModel). Summarizer API not needed.';
+                                        aiStatus.style.background = '#d4edda';
+                                        aiStatus.style.color = '#155724';
+                                        aiRadio.disabled = false;
+                                    } else {
+                                        message += `No AI APIs found: ${result.aiKeys.join(', ') || 'none'}`;
+                                    }
+                                    break;
+                                case 'after-download':
+                                    message += 'Model downloading. Check chrome://components/';
+                                    break;
+                                case 'no':
+                                    message += 'Not supported. Use Algorithmic method.';
+                                    break;
+                                default:
+                                    message += `${result.details}`;
+                            }
+                            
+                            aiStatus.textContent = message;
+                            if (!result.hasLanguageModel) {
+                                aiRadio.disabled = true;
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    }
+
+    // Show/hide AI setup help link based on selected method
+    document.querySelectorAll('input[name="summary-method"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'browser-ai') {
+                aiHelpLink.style.display = 'inline';
+            } else {
+                aiHelpLink.style.display = 'none';
+            }
+        });
+    });
+
+    if (aiHelpLink) {
+        aiHelpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const helpText = `Browser AI Setup - COMPLETE GUIDE:
+
+⚠️ CRITICAL: Browser AI is VERY experimental and may not work!
+
+STEP 1: Use Chrome Canary/Dev
+Download from: google.com/chrome/canary/
+
+STEP 2: Enable ALL Required Flags in chrome://flags/
+Copy and paste each flag exactly:
+
+#optimization-guide-on-device-model
+Set to: Enabled BypassPerfRequirement
+
+#prompt-api-for-gemini-nano  
+Set to: Enabled
+
+#ai-rewriter-api
+Set to: Enabled (optional but helps)
+
+STEP 3: RESTART Chrome Completely
+Close ALL windows, not just the tab!
+
+STEP 4: Wait for Model Download
+1. Open chrome://components/
+2. Find "Optimization Guide On Device Model"
+3. Click "Check for update"
+4. Wait 15-30 minutes for ~1.7GB download
+5. You should see version number appear
+
+STEP 5: Enable Developer Mode (IMPORTANT!)
+1. Go to chrome://extensions/
+2. Turn ON "Developer mode" (top right)
+3. This is REQUIRED for window.ai to work
+
+STEP 6: Test in Regular Tab
+Don't test in extension pages - use a real website
+
+STEP 7: Verify
+Click "🔍 Check" button
+
+REALITY CHECK:
+• This API is experimental and unstable
+• It may be disabled/removed anytime
+• Only works in US/UK regions (VPN may not help)
+• Requires ~2GB disk space
+• May not work at all in your setup
+
+RECOMMENDATION:
+Use the "🔧 Algorithmic" method instead - it's fast,
+reliable, and works everywhere without any setup!`;
+            
+            alert(helpText);
         });
     }
 

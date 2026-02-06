@@ -105,13 +105,15 @@
         <div class="control-card">
             <div class="label-group" style="margin-bottom: 10px;">
                 <span class="label-title">📝 Quick Summary</span>
-                <span class="label-desc">Adjust length with slider</span>
+                <span class="label-desc">Adjust summary length (3-25 sentences)</span>
             </div>
             
-            <div class="slider-container">
-                <span class="slider-label">Short</span>
-                <input type="range" id="summary-slider" min="3" max="15" value="5" class="range-slider">
-                <span class="slider-label">Long</span>
+            <div id="length-slider-container">
+                <div class="slider-container">
+                    <span class="slider-label">Brief</span>
+                    <input type="range" id="summary-slider" min="3" max="25" value="10" class="range-slider">
+                    <span class="slider-label">Detailed</span>
+                </div>
             </div>
 
             <button id="btn-summarize" class="action-btn">Generate Summary</button>
