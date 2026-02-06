@@ -51,7 +51,20 @@ if (document.readyState === 'loading') {
     restorePersistedState();
 }
 
-// --- 2. MESSAGE LISTENER ---
+// --- 2. LISTEN FOR STORAGE CHANGES (Cross-Tab Sync) ---
+// This ensures that when settings are changed in one tab (via popup),
+// all other open tabs automatically update to match the new state
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.caSettings) {
+        const newState = changes.caSettings.newValue;
+        if (newState) {
+            console.log('ContextAware: Settings changed, syncing to this tab', newState);
+            applyState(newState);
+        }
+    }
+});
+
+// --- 3. MESSAGE LISTENER ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "update_state") {
         applyState(request.state);
@@ -92,13 +105,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
          }
     }
 });
-
-// --- 2. SAVE STATE TO STORAGE ---
-function saveStateToStorage(state) {
-    chrome.storage.local.set({ caSettings: state }, () => {
-        console.log('ContextAware: State persisted', state);
-    });
-}
 
 // --- 3. NAVIGATION LINK EXTRACTOR ---
 // Finds the main navigation element, extracts clean links, and
@@ -179,9 +185,6 @@ function extractNavigationLinks(doc) {
 // --- 4. MAIN STATE APPLICATOR ---
 function applyState(state) {
     lastState = state || lastState;
-    
-    // Save state for persistence across page navigations
-    saveStateToStorage(lastState);
 
     if (summaryMode && state.simplify) {
         restoreSummaryView();

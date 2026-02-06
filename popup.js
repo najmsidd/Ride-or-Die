@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             state[key] = value;
             chrome.storage.local.set({ caSettings: state });
-            syncTab(state);
+            // State change will automatically sync to all tabs via storage listener
         });
     }
 
@@ -184,16 +184,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Sync Helper
+    // Sync Helper - Ensures content script is loaded on the active tab
     function syncTab(state) {
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             if (!tabs[0] || tabs[0].url.startsWith('chrome://')) return;
-            chrome.scripting.executeScript({
-                target: { tabId: tabs[0].id },
-                files: ['readability.js', 'summarizer.js', 'content.js']
-            }, () => {
-                chrome.scripting.insertCSS({ target: { tabId: tabs[0].id }, files: ['content.css'] });
-                chrome.tabs.sendMessage(tabs[0].id, { action: "update_state", state: state });
+            
+            // First, try to send a message to see if content script is already loaded
+            chrome.tabs.sendMessage(tabs[0].id, { action: "update_state", state: state }, (response) => {
+                // If there's an error, content script isn't loaded yet, so inject it
+                if (chrome.runtime.lastError) {
+                    chrome.scripting.executeScript({
+                        target: { tabId: tabs[0].id },
+                        files: ['readability.js', 'summarizer.js', 'content.js']
+                    }, () => {
+                        chrome.scripting.insertCSS({ target: { tabId: tabs[0].id }, files: ['content.css'] });
+                        // State will be applied via restorePersistedState when content.js loads
+                    });
+                }
+                // If no error, content script is already loaded and received the message
             });
         });
     }
