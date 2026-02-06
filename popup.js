@@ -1,12 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Elements ---
+    // Elements
     const toggleSimplify = document.getElementById('toggle-simplify');
+    const toggleFocus = document.getElementById('toggle-focus');
     const toggleRuler = document.getElementById('toggle-ruler');
     const toggleFont = document.getElementById('toggle-font');
     const toggleBionic = document.getElementById('toggle-bionic'); 
     const toggleTTS = document.getElementById('toggle-tts');
 
-    // TTS
+    // TTS Controls
     const ttsSettingsDiv = document.getElementById('tts-settings');
     const ttsRate = document.getElementById('tts-rate');
     const ttsPitch = document.getElementById('tts-pitch');
@@ -16,57 +17,83 @@ document.addEventListener('DOMContentLoaded', () => {
     const rateVal = document.getElementById('rate-value');
     const pitchVal = document.getElementById('pitch-value');
 
-    // Summary
     const btnSummarize = document.getElementById('btn-summarize');
     const slider = document.getElementById('summary-slider');
     const summaryText = document.getElementById('summary-text');
     const summaryBox = document.getElementById('summary-result');
 
-    // --- Init ---
-    // Force unchecked visually on load to prevent flashes
-    [toggleSimplify, toggleRuler, toggleFont, toggleBionic, toggleTTS].forEach(el => {
+    // Force UI to unchecked initially to prevent visual flash
+    [toggleSimplify, toggleFocus, toggleRuler, toggleFont, toggleBionic, toggleTTS].forEach(el => {
         if(el) el.checked = false;
     });
 
-    // 1. LOAD SETTINGS
-    chrome.storage.local.get(['caSettings', 'ttsConfig'], (result) => {
-        let state = result.caSettings;
-        if (!state) {
-            state = { simplify: false, ruler: false, dyslexia: false, bionic: false, tts: false };
-            chrome.storage.local.set({ caSettings: state });
-        }
-        const config = result.ttsConfig || { rate: 1, pitch: 1, anim: 'snappy' };
-        
-        // Apply UI
-        if(toggleSimplify) toggleSimplify.checked = state.simplify;
-        if(toggleRuler) toggleRuler.checked = state.ruler;
-        if(toggleFont) toggleFont.checked = state.dyslexia;
-        if(toggleBionic) toggleBionic.checked = state.bionic;
-        
-        if(toggleTTS) {
-            toggleTTS.checked = state.tts;
-            if(state.tts) ttsSettingsDiv.classList.remove('hidden');
-            else ttsSettingsDiv.classList.add('hidden');
-        }
-        
-        if(ttsRate) { ttsRate.value = config.rate; rateVal.textContent = config.rate + 'x'; }
-        if(ttsPitch) { ttsPitch.value = config.pitch; pitchVal.textContent = config.pitch; }
-        if(ttsAnim) { ttsAnim.value = config.anim; }
+    // 1. LOAD SAVED STATE
+    function loadState() {
+        chrome.storage.local.get(['caSettings', 'ttsConfig'], (result) => {
+            let state = result.caSettings;
 
-        syncTab(state);
+            if (!state) {
+                state = { 
+                    simplify: false, 
+                    focusMode: false,
+                    ruler: false, 
+                    dyslexia: false, 
+                    bionic: false, 
+                    tts: false 
+                };
+                chrome.storage.local.set({ caSettings: state });
+            }
+
+            const config = result.ttsConfig || { rate: 1, pitch: 1, anim: 'snappy' };
+            
+            // Apply to UI
+            if(toggleSimplify) toggleSimplify.checked = state.simplify;
+            if(toggleFocus) toggleFocus.checked = state.focusMode;
+            if(toggleRuler) toggleRuler.checked = state.ruler;
+            if(toggleFont) toggleFont.checked = state.dyslexia;
+            if(toggleBionic) toggleBionic.checked = state.bionic;
+            
+            if(toggleTTS) {
+                toggleTTS.checked = state.tts;
+                if(state.tts) ttsSettingsDiv.classList.remove('hidden');
+                else ttsSettingsDiv.classList.add('hidden');
+            }
+            
+            if(ttsRate) { ttsRate.value = config.rate; rateVal.textContent = config.rate + 'x'; }
+            if(ttsPitch) { ttsPitch.value = config.pitch; pitchVal.textContent = config.pitch; }
+            if(ttsAnim) { ttsAnim.value = config.anim; }
+
+            // Only sync if we initiated the load, otherwise background handles injection
+            // But doing it here ensures popup open = sync
+            syncTab(state);
+        });
+    }
+
+    // Initial Load
+    loadState();
+
+    // 2. LISTEN FOR CHANGES (Live Update UI if Shortcut is used)
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'local' && changes.caSettings) {
+            const newState = changes.caSettings.newValue;
+            if(toggleFocus) toggleFocus.checked = newState.focusMode;
+            // You can add others here if you add more shortcuts later
+        }
     });
 
-    // 2. SETTINGS HELPERS
+    // 3. SAVE STATE HELPER
     function updateSetting(key, value) {
         chrome.storage.local.get(['caSettings'], (result) => {
-            const state = result.caSettings || { simplify: false, ruler: false, dyslexia: false, bionic: false, tts: false };
+            const state = result.caSettings || { simplify: false, focusMode: false, ruler: false, dyslexia: false, bionic: false, tts: false };
             state[key] = value;
             chrome.storage.local.set({ caSettings: state });
             syncTab(state);
         });
     }
 
+    // Toggles
     if(toggleSimplify) toggleSimplify.addEventListener('change', (e) => updateSetting('simplify', e.target.checked));
+    if(toggleFocus) toggleFocus.addEventListener('change', (e) => updateSetting('focusMode', e.target.checked));
     if(toggleRuler) toggleRuler.addEventListener('change', (e) => updateSetting('ruler', e.target.checked));
     if(toggleFont) toggleFont.addEventListener('change', (e) => updateSetting('dyslexia', e.target.checked));
     if(toggleBionic) toggleBionic.addEventListener('change', (e) => updateSetting('bionic', e.target.checked));
@@ -78,9 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSetting('tts', isChecked);
     });
 
-    // TTS Logic
+    // TTS Settings
     function saveTTSConfig() {
-        const config = { rate: parseFloat(ttsRate.value), pitch: parseFloat(ttsPitch.value), anim: ttsAnim.value };
+        const config = {
+            rate: parseFloat(ttsRate.value),
+            pitch: parseFloat(ttsPitch.value),
+            anim: ttsAnim.value
+        };
         chrome.storage.local.set({ ttsConfig: config });
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             if(tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { action: "tts_update_settings", settings: config });
@@ -95,13 +126,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnStop) btnStop.addEventListener('click', () => sendTTSCommand('stop'));
 
     function sendTTSCommand(cmd) {
-        const config = { rate: parseFloat(ttsRate.value), pitch: parseFloat(ttsPitch.value), anim: ttsAnim.value };
+        const config = {
+            rate: parseFloat(ttsRate.value),
+            pitch: parseFloat(ttsPitch.value),
+            anim: ttsAnim.value
+        };
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             chrome.tabs.sendMessage(tabs[0].id, { action: "tts_control", command: cmd, settings: config });
         });
     }
 
-    // 4. SUMMARY
+    // Summarize
     if(btnSummarize) {
         btnSummarize.addEventListener('click', () => {
             summaryBox.classList.remove('hidden');
@@ -133,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sync Helper
     function syncTab(state) {
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-            if (tabs[0].url.startsWith('chrome://')) return;
+            if (!tabs[0] || tabs[0].url.startsWith('chrome://')) return;
             chrome.scripting.executeScript({
                 target: { tabId: tabs[0].id },
                 files: ['readability.js', 'summarizer.js', 'content.js']

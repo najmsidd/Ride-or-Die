@@ -1,23 +1,32 @@
-// State Variables
+// --- GUARD CLAUSE (Prevents crashes on re-injection) ---
+if (window.caScriptLoaded) {
+    // If script is already loaded, we just listen for messages. 
+    // The existing listener handles it. We stop here to prevent variable re-declaration errors.
+    throw new Error("ContextAware script already loaded"); 
+}
+window.caScriptLoaded = true;
+
+// --- STATE VARIABLES ---
 let originalBody = null;
 let articleText = ""; 
 let bionicProcessed = false; 
 
-// Global reference for ruler
+// Feature Specific Globals
 let rulerElement = null;
+let focusOverlay = null; 
+let focusUpdateFrame = null; 
 
-// TTS Variables
+// TTS Globals
 let ttsUtterance = null;
 let ttsWordMap = []; 
 let isTTSActive = false;
 
-// 1. LISTEN FOR MESSAGES
+// --- 1. MESSAGE LISTENER ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "update_state") {
         applyState(request.state);
     } 
     else if (request.action === "generate_summary") {
-        // Existing summary logic
         const sourceText = articleText || document.body.innerText;
         const cleanSource = sourceText.split('\n').filter(line => line.trim().length > 40).join(' ');
 
@@ -28,7 +37,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse({ summary: "Error: Summarizer library not loaded." });
         }
     }
-    // TTS Commands
     else if (request.action === "tts_control") {
         handleTTSControl(request.command, request.settings);
     }
@@ -40,16 +48,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// 2. APPLY STATE
+// --- 2. MAIN STATE APPLICATOR ---
 function applyState(state) {
-    // Feature 1: Simplify Mode
+    // A. Simplify Mode
     if (state.simplify) {
         if (!originalBody) originalBody = document.body.innerHTML;
 
         if (!articleText) {
             const docClone = document.cloneNode(true);
-            
-            // Rescue Forms
             let rescuedForm = null;
             const form = docClone.querySelector('form');
             if (form && form.querySelectorAll('input, select, textarea').length > 0) {
@@ -76,13 +82,12 @@ function applyState(state) {
                             </div>
                         `;
                     }
-                    
                     htmlPayload += `</div>`; 
-                    
                     document.body.innerHTML = htmlPayload;
                     
                     bionicProcessed = false; 
                     if(isTTSActive) stopTTS(); 
+                    toggleFocusMode(false); 
                 }
             } catch(e) { console.error(e); }
         }
@@ -94,20 +99,24 @@ function applyState(state) {
             articleText = "";
             bionicProcessed = false;
             if(isTTSActive) stopTTS();
+            toggleFocusMode(false);
         }
     }
 
-    // Feature 2: Dyslexia Font
+    // B. Dyslexia Font
     if (state.dyslexia) document.body.classList.add("ca-dyslexia-mode");
     else document.body.classList.remove("ca-dyslexia-mode");
 
-    // Feature 3: Bionic Reading
+    // C. Bionic Reading
     toggleBionic(state.bionic);
 
-    // Feature 4: Reading Ruler
+    // D. Reading Ruler
     toggleRuler(state.ruler);
     
-    // Feature 5: TTS
+    // E. Focus Mode
+    toggleFocusMode(state.focusMode);
+
+    // F. TTS
     if (state.tts) {
         isTTSActive = true; 
     } else {
@@ -116,7 +125,96 @@ function applyState(state) {
     }
 }
 
-// --- RULER LOGIC ---
+// ==========================================
+// FOCUS MODE (SVG "Swiss Cheese" Method)
+// ==========================================
+function toggleFocusMode(enable) {
+    if (focusOverlay) {
+        focusOverlay.remove();
+        focusOverlay = null;
+        window.removeEventListener('scroll', requestFocusUpdate);
+        window.removeEventListener('resize', requestFocusUpdate);
+    }
+
+    if (enable) {
+        focusOverlay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        focusOverlay.id = "ca-focus-svg";
+        focusOverlay.style.position = "fixed";
+        focusOverlay.style.top = "0";
+        focusOverlay.style.left = "0";
+        focusOverlay.style.width = "100%";
+        focusOverlay.style.height = "100%";
+        focusOverlay.style.zIndex = "2147483640"; 
+        focusOverlay.style.pointerEvents = "none"; 
+        
+        const maskPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        maskPath.setAttribute("fill", "rgba(0, 0, 0, 0.75)"); 
+        maskPath.setAttribute("fill-rule", "evenodd"); 
+        focusOverlay.appendChild(maskPath);
+
+        const borderGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        borderGroup.setAttribute("stroke", "#FFD700"); 
+        borderGroup.setAttribute("stroke-width", "2");
+        borderGroup.setAttribute("fill", "none");
+        focusOverlay.appendChild(borderGroup);
+
+        document.body.appendChild(focusOverlay);
+        window.addEventListener('scroll', requestFocusUpdate, { passive: true });
+        window.addEventListener('resize', requestFocusUpdate, { passive: true });
+        
+        updateFocusOverlay();
+    }
+}
+
+function requestFocusUpdate() {
+    if (!focusUpdateFrame) {
+        focusUpdateFrame = requestAnimationFrame(() => {
+            updateFocusOverlay();
+            focusUpdateFrame = null;
+        });
+    }
+}
+
+function updateFocusOverlay() {
+    if (!focusOverlay) return;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const maskPath = focusOverlay.querySelector("path");
+    const borderGroup = focusOverlay.querySelector("g");
+
+    while (borderGroup.firstChild) {
+        borderGroup.removeChild(borderGroup.firstChild);
+    }
+
+    const selectors = `a[href], button, input, textarea, select, [role="button"], [role="link"], .btn`;
+    const elements = document.querySelectorAll(selectors);
+
+    let d = `M0 0 H${width} V${height} H0 Z`;
+
+    elements.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0 || rect.bottom < 0 || rect.top > height) return;
+        const style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return;
+
+        d += ` M${rect.x} ${rect.y} h${rect.width} v${rect.height} h-${rect.width} z`;
+
+        const borderRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        borderRect.setAttribute("x", rect.x - 2); 
+        borderRect.setAttribute("y", rect.y - 2);
+        borderRect.setAttribute("width", rect.width + 4);
+        borderRect.setAttribute("height", rect.height + 4);
+        borderRect.setAttribute("rx", "2");
+        borderGroup.appendChild(borderRect);
+    });
+
+    maskPath.setAttribute("d", d);
+}
+
+
+// ==========================================
+// READING RULER
+// ==========================================
 function toggleRuler(enable) {
     let existingRuler = document.getElementById('ca-ruler');
     if (enable) {
@@ -142,7 +240,9 @@ function moveRuler(e) {
     if (r) r.style.top = (e.clientY - 30) + "px";
 }
 
-// --- BIONIC LOGIC ---
+// ==========================================
+// BIONIC READING
+// ==========================================
 function toggleBionic(enable) {
     if (enable) {
         if (!bionicProcessed) {
@@ -157,20 +257,15 @@ function toggleBionic(enable) {
 
 function processBionicText() {
     const root = document.querySelector('.ca-content') || document.body;
-    const walker = document.createTreeWalker(
-        root, NodeFilter.SHOW_TEXT,
-        {
-            acceptNode: function(node) {
-                if (node.parentNode.classList.contains('ca-bionic-target')) return NodeFilter.FILTER_REJECT;
-                if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'].includes(node.parentNode.tagName)) return NodeFilter.FILTER_REJECT;
-                if (document.querySelector('.ca-tts-word') && !node.parentNode.classList.contains('ca-tts-word')) {
-                     return NodeFilter.FILTER_SKIP;
-                }
-                if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
-                return NodeFilter.FILTER_ACCEPT;
-            }
-        }, false
-    );
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: function(node) {
+            if (node.parentNode.classList.contains('ca-bionic-target')) return NodeFilter.FILTER_REJECT;
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'].includes(node.parentNode.tagName)) return NodeFilter.FILTER_REJECT;
+            if (document.querySelector('.ca-tts-word') && !node.parentNode.classList.contains('ca-tts-word')) return NodeFilter.FILTER_SKIP;
+            if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
+            return NodeFilter.FILTER_ACCEPT;
+        }
+    }, false);
 
     const nodes = [];
     let node;
@@ -185,7 +280,6 @@ function processBionicText() {
                 const len = word.length;
                 let boldLen = 1;
                 if (len > 3) boldLen = len <= 5 ? 2 : 3;
-                
                 const span = document.createElement('span');
                 span.className = 'ca-bionic-target';
                 span.textContent = word.substring(0, boldLen);
@@ -200,12 +294,13 @@ function processBionicText() {
     });
 }
 
-// --- TTS LOGIC ---
+// ==========================================
+// TEXT TO SPEECH
+// ==========================================
 function stripBionic() {
     const bionics = document.querySelectorAll('.ca-bionic-target');
     bionics.forEach(b => {
-        const text = b.textContent;
-        const textNode = document.createTextNode(text);
+        const textNode = document.createTextNode(b.textContent);
         b.parentNode.replaceChild(textNode, b);
     });
     bionicProcessed = false;
@@ -215,20 +310,17 @@ function stripBionic() {
 
 function prepareTTS() {
     const root = document.querySelector('.ca-content') || document.body;
-    if (document.querySelector('.ca-bionic-target')) stripBionic();
-    if (root.querySelector('.ca-tts-word')) return;
+    if (document.querySelector('.ca-bionic-target')) stripBionic(); 
+    if (root.querySelector('.ca-tts-word')) return; 
 
-    const walker = document.createTreeWalker(
-        root, NodeFilter.SHOW_TEXT,
-        {
-            acceptNode: function(node) {
-                if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'].includes(node.parentNode.tagName)) return NodeFilter.FILTER_REJECT;
-                if (node.parentNode.classList.contains('ca-tts-word')) return NodeFilter.FILTER_REJECT;
-                if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
-                return NodeFilter.FILTER_ACCEPT;
-            }
-        }, false
-    );
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: function(node) {
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'].includes(node.parentNode.tagName)) return NodeFilter.FILTER_REJECT;
+            if (node.parentNode.classList.contains('ca-tts-word')) return NodeFilter.FILTER_REJECT;
+            if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
+            return NodeFilter.FILTER_ACCEPT;
+        }
+    }, false);
 
     const nodes = [];
     let node;
@@ -261,25 +353,34 @@ function prepareTTS() {
 }
 
 function handleTTSControl(command, settings) {
-    if (command === 'stop') { stopTTS(); return; }
+    if (command === 'stop') {
+        stopTTS();
+        return;
+    }
     if (command === 'play') {
         stopTTS(); 
         prepareTTS();
+
         setTimeout(() => {
             const spans = Array.from(document.querySelectorAll('.ca-tts-word'));
-            if (spans.length === 0) { alert("ContextAware: No text found."); return; }
-            
+            if (spans.length === 0) {
+                alert("ContextAware: No text found.");
+                return;
+            }
             let fullText = "";
             ttsWordMap = [];
             spans.forEach(span => {
-                ttsWordMap.push({ start: fullText.length, end: fullText.length + span.textContent.length, element: span });
+                ttsWordMap.push({ 
+                    start: fullText.length, 
+                    end: fullText.length + span.textContent.length,
+                    element: span 
+                });
                 fullText += span.textContent + " "; 
             });
 
             ttsUtterance = new SpeechSynthesisUtterance(fullText);
             ttsUtterance.rate = settings.rate || 1;
             ttsUtterance.pitch = settings.pitch || 1;
-            
             document.body.classList.remove('ca-tts-anim-snappy', 'ca-tts-anim-smooth');
             document.body.classList.add(`ca-tts-anim-${settings.anim}`);
 
@@ -295,7 +396,7 @@ function handleTTSControl(command, settings) {
                     }
                 }
             };
-            ttsUtterance.onend = () => { document.querySelectorAll('.ca-tts-active').forEach(el => el.classList.remove('ca-tts-active')); };
+            ttsUtterance.onend = () => document.querySelectorAll('.ca-tts-active').forEach(el => el.classList.remove('ca-tts-active'));
             window.speechSynthesis.speak(ttsUtterance);
         }, 50);
     }

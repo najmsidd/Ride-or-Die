@@ -1,20 +1,32 @@
 {
   "manifest_version": 3,
-  "name": "ContextAware: Simplify Web",
-  "version": "2.6",
-  "description": " distraction-free reading and form filling assistant.",
+  "name": "ContextAware: Focus & Accessibility",
+  "version": "3.2",
+  "description": "Reduces cognitive load with Reader View, Line Focus, and Summarization.",
   "permissions": ["activeTab", "scripting", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png", 
+      "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
-  "icons": { 
-    "16": "icons/icon16.png", 
-    "48": "icons/icon48.png", 
-    "128": "icons/icon128.png" 
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "toggle-focus": {
+      "suggested_key": {
+        "default": "Alt+Shift+F",
+        "mac": "Alt+Shift+F"
+      },
+      "description": "Toggle Interactive Focus Mode"
+    }
   }
 }
