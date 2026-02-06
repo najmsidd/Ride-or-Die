@@ -1,7 +1,5 @@
 // --- GUARD CLAUSE (Prevents crashes on re-injection) ---
-if (window.caScriptLoaded) {
-    throw new Error("ContextAware script already loaded"); 
-}
+if (!window.caScriptLoaded) {
 window.caScriptLoaded = true;
 
 // --- STATE VARIABLES ---
@@ -12,7 +10,7 @@ let bionicProcessed = false;
 // Summary View State
 let summaryMode = false;
 let summaryOriginalBody = null;
-let lastState = { simplify: false, focusMode: false, ruler: false, dyslexia: false, bionic: false, tts: false, tint: "off", contrast: "off" };
+let lastState = { simplify: false, focusMode: false, ruler: false, dyslexia: false, bionic: false, newContent: false, tts: false, tint: "off", contrast: "off" };
 
 // Feature Specific Globals
 let rulerElement = null;
@@ -156,6 +154,9 @@ function applyState(state) {
         stopTTS();
         isTTSActive = false;
     }
+
+    // I. New Content Indicators
+    toggleNewContentObserver(state.newContent);
 }
 
 // ==========================================
@@ -297,6 +298,7 @@ function toggleRuler(enable) {
         if (!existingRuler) {
             rulerElement = document.createElement("div");
             rulerElement.id = "ca-ruler";
+            rulerElement.style.display = "block";
             document.body.appendChild(rulerElement);
             document.removeEventListener("mousemove", moveRuler);
             document.addEventListener("mousemove", moveRuler);
@@ -549,3 +551,179 @@ function restoreSummaryView() {
     summaryOriginalBody = null;
     bionicProcessed = false;
 }
+
+// ==========================================
+// NEW CONTENT INDICATORS
+// ==========================================
+
+let contentObserver = null;
+let markedElements = new WeakSet();
+const NEW_CONTENT_DURATION = 5000; // Duration in ms before indicator fades
+
+/**
+ * Initialize the new content observer
+ * Watches for DOM mutations and highlights changed/new elements
+ */
+function initNewContentObserver() {
+    if (contentObserver) {
+        contentObserver.disconnect();
+    }
+
+    contentObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            // Handle added nodes
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Skip if already marked or is a script/style element
+                        if (markedElements.has(node) || 
+                            node.tagName === 'SCRIPT' || 
+                            node.tagName === 'STYLE' ||
+                            node.id === 'ca-focus-svg' ||
+                            node.id === 'ca-ruler' ||
+                            node.id === 'ca-tint-overlay' ||
+                            node.classList.contains('ca-container') ||
+                            node.classList.contains('ca-summary-container')) {
+                            return;
+                        }
+                        markAsNewContent(node);
+                    }
+                });
+            }
+            
+            // Handle content changes in existing nodes
+            if (mutation.type === 'characterData' || 
+                (mutation.type === 'childList' && mutation.target.nodeType === Node.ELEMENT_NODE)) {
+                const target = mutation.type === 'characterData' ? mutation.target.parentElement : mutation.target;
+                
+                if (target && 
+                    !markedElements.has(target) &&
+                    target.nodeType === Node.ELEMENT_NODE &&
+                    target.tagName !== 'SCRIPT' && 
+                    target.tagName !== 'STYLE' &&
+                    !target.classList.contains('ca-new-content') &&
+                    !target.classList.contains('ca-tts-word')) {
+                    
+                    // Only mark if it's a visible content element
+                    const style = window.getComputedStyle(target);
+                    if (style.display !== 'none' && style.visibility !== 'hidden') {
+                        markAsNewContent(target, 'subtle');
+                    }
+                }
+            }
+        });
+    });
+
+    // Observe the document with specific configuration
+    contentObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        characterDataOldValue: false
+    });
+}
+
+/**
+ * Mark an element as new content with visual indicator
+ * @param {HTMLElement} element - The element to mark
+ * @param {string} variant - 'normal', 'glow', or 'subtle'
+ * @param {number} duration - How long to show indicator (ms), 0 for permanent
+ */
+function markAsNewContent(element, variant = 'normal', duration = NEW_CONTENT_DURATION) {
+    if (!element || markedElements.has(element)) return;
+    
+    markedElements.add(element);
+    
+    // Determine which class to apply
+    let className = 'ca-new-content';
+    if (variant === 'glow') {
+        className = 'ca-new-content-glow';
+    } else if (variant === 'subtle') {
+        className = 'ca-new-content-subtle';
+    }
+    
+    // Add the class
+    element.classList.add(className);
+    
+    // Auto-remove after duration (if duration > 0)
+    if (duration > 0) {
+        setTimeout(() => {
+            element.classList.add('ca-new-content-fading');
+            
+            setTimeout(() => {
+                element.classList.remove(className, 'ca-new-content-fading');
+                markedElements.delete(element);
+            }, 1000); // Fade out duration
+        }, duration);
+    }
+}
+
+/**
+ * Mark an element as loading
+ * @param {HTMLElement} element - The element to mark
+ */
+function markAsLoading(element) {
+    if (!element) return;
+    element.classList.add('ca-content-loading');
+}
+
+/**
+ * Remove loading indicator and optionally mark as new content
+ * @param {HTMLElement} element - The element to update
+ * @param {boolean} showAsNew - Whether to show new content indicator after loading
+ */
+function unmarkLoading(element, showAsNew = true) {
+    if (!element) return;
+    element.classList.remove('ca-content-loading');
+    
+    if (showAsNew) {
+        markAsNewContent(element, 'normal');
+    }
+}
+
+/**
+ * Stop observing for new content
+ */
+function stopNewContentObserver() {
+    if (contentObserver) {
+        contentObserver.disconnect();
+        contentObserver = null;
+    }
+}
+
+/**
+ * Toggle the new content observer on/off
+ * @param {boolean} enable - Whether to enable the observer
+ */
+function toggleNewContentObserver(enable) {
+    if (enable) {
+        if (!contentObserver) {
+            initNewContentObserver();
+        }
+    } else {
+        stopNewContentObserver();
+        // Clean up any existing indicators
+        document.querySelectorAll('.ca-new-content, .ca-new-content-glow, .ca-new-content-subtle, .ca-content-loading').forEach(el => {
+            el.classList.remove('ca-new-content', 'ca-new-content-glow', 'ca-new-content-subtle', 'ca-new-content-fading', 'ca-content-loading');
+        });
+        markedElements = new WeakSet();
+    }
+}
+
+/**
+ * Manually highlight specific elements (useful for AJAX-loaded content)
+ * @param {string} selector - CSS selector for elements to highlight
+ * @param {string} variant - 'normal', 'glow', or 'subtle'
+ */
+function highlightNewContent(selector, variant = 'normal') {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(el => markAsNewContent(el, variant));
+}
+
+// Expose functions globally for external use (always available for manual control)
+window.caMarkNewContent = markAsNewContent;
+window.caMarkLoading = markAsLoading;
+window.caUnmarkLoading = unmarkLoading;
+window.caHighlightNewContent = highlightNewContent;
+
+} // End of guard clause

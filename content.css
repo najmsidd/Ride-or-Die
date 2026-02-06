@@ -71,6 +71,7 @@
     border-bottom: 2px solid rgba(255, 255, 255, 0.3);
     transition: top 0.05s linear;
 }
+}
 
 /* --- 4. BIONIC READING --- */
 .ca-bionic-target {
@@ -274,4 +275,116 @@ html.ca-contrast-light-high textarea {
     font-size: 14px;
     color: #7f8c8d;
     text-align: center;
+}
+/* --- 10. NEW CONTENT INDICATORS --- */
+
+/* Base class for new content */
+.ca-new-content {
+    position: relative;
+    border: 2px solid rgba(255, 215, 0, 0.9) !important;
+    border-radius: 4px !important;
+    background: linear-gradient(90deg, 
+        rgba(255, 215, 0, 0.05) 0%, 
+        transparent 50%, 
+        rgba(255, 215, 0, 0.05) 100%) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Persistent glow variant */
+.ca-new-content-glow {
+    position: relative;
+    border: 2px solid rgba(255, 215, 0, 1) !important;
+    border-radius: 4px !important;
+    background: linear-gradient(90deg, 
+        rgba(255, 215, 0, 0.08) 0%, 
+        transparent 50%, 
+        rgba(255, 215, 0, 0.08) 100%) !important;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5),
+                0 0 10px rgba(255, 215, 0, 0.3),
+                inset 0 0 15px rgba(255, 215, 0, 0.1);
+}
+
+/* Subtle variant for inline elements */
+.ca-new-content-subtle {
+    position: relative;
+    border-left: 3px solid rgba(255, 215, 0, 0.9) !important;
+    padding-left: 8px !important;
+    background: linear-gradient(90deg, 
+        rgba(255, 215, 0, 0.1) 0%, 
+        transparent 20%) !important;
+}
+
+/* Corner badge for new content */
+.ca-new-content::before {
+    content: "NEW";
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 0 2px 0 4px;
+    z-index: 1;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ca-new-content-subtle::before {
+    display: none;
+}
+
+/* Fade out after duration */
+.ca-new-content-fading {
+    animation: ca-new-content-fade-out 1s ease-out forwards;
+    border-color: rgba(255, 215, 0, 0.3) !important;
+}
+
+.ca-new-content-fading::before {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+@keyframes ca-new-content-fade-out {
+    0% {
+        opacity: 1;
+        border-color: rgba(255, 215, 0, 0.9);
+    }
+    100% {
+        opacity: 1;
+        border-color: transparent;
+        box-shadow: none;
+    }
+}
+
+/* Loading state indicator */
+.ca-content-loading {
+    position: relative;
+    border: 2px dashed rgba(0, 120, 212, 0.5) !important;
+    border-radius: 4px !important;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0, 120, 212, 0.05),
+        rgba(0, 120, 212, 0.05) 10px,
+        transparent 10px,
+        transparent 20px
+    ) !important;
+    opacity: 0.8;
+}
+
+.ca-content-loading::before {
+    content: "Loading...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 120, 212, 0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 2;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }

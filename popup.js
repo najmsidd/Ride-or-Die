@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleFocus = document.getElementById('toggle-focus');
     const toggleRuler = document.getElementById('toggle-ruler');
     const toggleFont = document.getElementById('toggle-font');
-    const toggleBionic = document.getElementById('toggle-bionic'); 
+    const toggleBionic = document.getElementById('toggle-bionic');
+    const toggleNewContent = document.getElementById('toggle-newcontent');
     const toggleTTS = document.getElementById('toggle-tts');
     const selectTint = document.getElementById('select-tint');
     const selectContrast = document.getElementById('select-contrast');
@@ -25,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const summaryBox = document.getElementById('summary-result');
 
     // Force UI to unchecked initially to prevent visual flash
-    [toggleSimplify, toggleFocus, toggleRuler, toggleFont, toggleBionic, toggleTTS].forEach(el => {
+    [toggleSimplify, toggleFocus, toggleRuler, toggleFont, toggleBionic, toggleNewContent, toggleTTS].forEach(el => {
         if(el) el.checked = false;
     });
     if(selectTint) selectTint.value = "off";
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ruler: false, 
                     dyslexia: false, 
                     bionic: false, 
+                    newContent: false,
                     tts: false,
                     tint: "off",
                     contrast: "off"
@@ -58,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(toggleRuler) toggleRuler.checked = state.ruler;
             if(toggleFont) toggleFont.checked = state.dyslexia;
             if(toggleBionic) toggleBionic.checked = state.bionic;
+            if(toggleNewContent) toggleNewContent.checked = state.newContent || false;
             if(selectTint) selectTint.value = state.tint || "off"; 
             if(selectContrast) selectContrast.value = state.contrast || "off"; 
             
@@ -97,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ruler: false, 
                 dyslexia: false, 
                 bionic: false, 
+                newContent: false,
                 tts: false,
                 tint: "off",
                 contrast: "off"
@@ -113,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(toggleRuler) toggleRuler.addEventListener('change', (e) => updateSetting('ruler', e.target.checked));
     if(toggleFont) toggleFont.addEventListener('change', (e) => updateSetting('dyslexia', e.target.checked));
     if(toggleBionic) toggleBionic.addEventListener('change', (e) => updateSetting('bionic', e.target.checked));
+    if(toggleNewContent) toggleNewContent.addEventListener('change', (e) => updateSetting('newContent', e.target.checked));
     if(selectTint) selectTint.addEventListener('change', (e) => updateSetting('tint', e.target.value)); 
     if(selectContrast) selectContrast.addEventListener('change', (e) => updateSetting('contrast', e.target.value)); 
     
