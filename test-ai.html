@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browser AI Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; }
+        .result { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Browser AI Diagnostic Tool</h1>
+    
+    <button onclick="checkAPIs()">1. Check Available APIs</button>
+    <button onclick="testSummarizer()">2. Test Summarizer</button>
+    <button onclick="checkComponents()">3. Check Components</button>
+    
+    <div id="output"></div>
+
+    <script>
+        function log(message, type = 'result') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<pre>${message}</pre>`;
+            document.getElementById('output').appendChild(div);
+        }
+
+        function checkAPIs() {
+            document.getElementById('output').innerHTML = '';
+            
+            log(`Chrome Version: ${navigator.userAgent}`, 'result');
+            log(`window.ai exists: ${typeof window.ai !== 'undefined'}`, 'result');
+            
+            if (typeof window.ai !== 'undefined') {
+                const apis = Object.keys(window.ai);
+                log(`Available APIs: ${apis.join(', ')}`, apis.length > 0 ? 'success' : 'warning');
+                
+                log(`Summarizer API: ${typeof window.ai.summarizer !== 'undefined' ? '✅ Found' : '❌ Missing'}`, 
+                    typeof window.ai.summarizer !== 'undefined' ? 'success' : 'error');
+                    
+                log(`Language Model API: ${typeof window.ai.languageModel !== 'undefined' ? '✅ Found' : '❌ Missing'}`, 
+                    typeof window.ai.languageModel !== 'undefined' ? 'success' : 'error');
+            } else {
+                log('❌ window.ai is not available!\n\nRequired flags:\n• Prompt API for Gemini Nano\n• Summarization API for Gemini Nano\n• Optimization Guide On Device Model\n\nRestart Chrome after enabling.', 'error');
+            }
+        }
+
+        async function testSummarizer() {
+            try {
+                if (!window.ai?.summarizer) {
+                    log('❌ Summarizer API not available', 'error');
+                    return;
+                }
+                
+                log('Checking summarizer capabilities...', 'result');
+                const caps = await window.ai.summarizer.capabilities();
+                log(`Capabilities: ${JSON.stringify(caps, null, 2)}`, 
+                    caps.available === 'readily' ? 'success' : 'warning');
+                
+                if (caps.available !== 'readily') {
+                    log(`Status: ${caps.available}\n\n${caps.available === 'after-download' ? '⏳ Model still downloading' : '❌ Not available'}`, 'warning');
+                    return;
+                }
+                
+                log('Creating summarizer...', 'result');
+                const summarizer = await window.ai.summarizer.create({
+                    type: 'key-points',
+                    format: 'plain-text',
+                    length: 'short'
+                });
+                
+                log('✅ Summarizer created successfully!', 'success');
+                
+                log('Testing summarization...', 'result');
+                const testText = 'Artificial intelligence has made significant progress in recent years. Machine learning algorithms can now perform complex tasks like image recognition, natural language processing, and game playing. Deep learning, a subset of machine learning, uses neural networks with multiple layers to analyze data. These technologies are being applied in various fields including healthcare, finance, and autonomous vehicles.';
+                
+                const summary = await summarizer.summarize(testText);
+                log(`✅ Summary generated:\n\n${summary}`, 'success');
+                
+                summarizer.destroy();
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}\n\nStack: ${error.stack}`, 'error');
+            }
+        }
+
+        function checkComponents() {
+            log('Opening chrome://components/ in new tab...\n\nLook for "Optimization Guide On Device Model"', 'result');
+            window.open('chrome://components/', '_blank');
+        }
+
+        // Auto-run check on load
+        setTimeout(checkAPIs, 500);
+    </script>
+</body>
+</html>
