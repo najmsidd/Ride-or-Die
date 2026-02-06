@@ -104,3 +104,93 @@
 .ca-tts-anim-smooth .ca-tts-active {
     transition: background-color 0.2s ease-in-out, color 0.2s ease !important;
 }
+
+/* --- 6. SUMMARY VIEW --- */
+.ca-summary-mode {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #222 !important;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    min-height: 100vh;
+}
+
+.ca-summary-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 50px 60px;
+    background: #ffffff;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.15);
+    border-radius: 16px;
+    position: relative;
+}
+
+.ca-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #667eea;
+}
+
+.ca-summary-title {
+    font-size: 2.5em;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a2e;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.ca-summary-close-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ca-summary-close-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.ca-summary-close-btn:active {
+    transform: translateY(0);
+}
+
+.ca-summary-content {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.ca-summary-text {
+    white-space: pre-wrap;
+    font-size: 18px;
+    line-height: 1.8;
+    color: #2c3e50;
+    margin: 0;
+    font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.ca-summary-meta {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px dashed #e0e0e0;
+    font-size: 14px;
+    color: #7f8c8d;
+    text-align: center;
+}

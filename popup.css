@@ -52,3 +52,47 @@ input:checked + .slider:before { transform: translateX(20px); }
 .hidden { display: none; }
 #summary-result { margin-top: 10px; }
 #summary-text { width: 100%; height: 120px; border: 1px solid #eee; background: #fafafa; border-radius: 6px; padding: 8px; font-size: 12px; resize: none; font-family: inherit; box-sizing: border-box; }
+
+/* Radio buttons for summary method */
+input[type="radio"] {
+    accent-color: #0078d4;
+    cursor: pointer;
+}
+
+input[type="radio"]:hover {
+    transform: scale(1.1);
+}
+
+/* AI help link */
+#ai-help-link {
+    transition: color 0.2s;
+}
+
+#ai-help-link:hover {
+    color: #005a9e;
+    text-decoration: underline;
+}
+
+/* AI Status and Check Button */
+#check-ai-btn {
+    transition: background 0.2s;
+}
+
+#check-ai-btn:hover {
+    background: #218838 !important;
+}
+
+#ai-status {
+    border: 1px solid;
+    font-weight: 500;
+}
+
+#ai-radio:disabled + span {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#ai-radio-label:has(#ai-radio:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
