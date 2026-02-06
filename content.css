@@ -82,25 +82,36 @@
 }
 
 /* --- 5. TEXT TO SPEECH (TTS) --- */
-/* The word wrapper */
-.ca-tts-word {
-    display: inline;
-}
+.ca-tts-word { display: inline; }
 
-/* The active word being spoken */
 .ca-tts-active {
-    background-color: #ffeb3b !important; /* Bright Yellow Highlight */
+    background-color: #ffeb3b !important;
     color: #000 !important;
     border-radius: 3px;
-    box-shadow: 0 0 0 2px #ffeb3b; /* Ensure highlight is visible */
+    box-shadow: 0 0 0 2px #ffeb3b;
 }
 
-/* Animation: Snappy (Instant) */
-.ca-tts-anim-snappy .ca-tts-active {
-    transition: none !important;
+.ca-tts-anim-snappy .ca-tts-active { transition: none !important; }
+.ca-tts-anim-smooth .ca-tts-active { transition: background-color 0.2s ease-in-out, color 0.2s ease !important; }
+
+/* --- 6. AUTO-SAVE TOAST (NEW) --- */
+#ca-restore-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #28a745; /* Green Success */
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 2147483647;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    animation: caSlideIn 0.5s ease-out;
+    transition: opacity 0.5s ease;
 }
 
-/* Animation: Smooth (Gradual Fade) */
-.ca-tts-anim-smooth .ca-tts-active {
-    transition: background-color 0.2s ease-in-out, color 0.2s ease !important;
+@keyframes caSlideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }

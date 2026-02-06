@@ -11,13 +11,21 @@ let ttsUtterance = null;
 let ttsWordMap = []; 
 let isTTSActive = false;
 
+// --- AUTO-SAVE CONSTANTS (NEW) ---
+const PAGE_KEY = 'ca_save_' + window.location.href;
+
+// --- INITIALIZE AUTO-SAVE ---
+// Restore immediately on load in case user refreshed
+restoreFormData();
+initAutoSaveListeners();
+
+
 // 1. LISTEN FOR MESSAGES
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "update_state") {
         applyState(request.state);
     } 
     else if (request.action === "generate_summary") {
-        // Existing summary logic
         const sourceText = articleText || document.body.innerText;
         const cleanSource = sourceText.split('\n').filter(line => line.trim().length > 40).join(' ');
 
@@ -42,7 +50,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 2. APPLY STATE
 function applyState(state) {
-    // Feature 1: Simplify Mode
+    // --- Feature 1: Simplify Mode ---
     if (state.simplify) {
         if (!originalBody) originalBody = document.body.innerHTML;
 
@@ -81,6 +89,12 @@ function applyState(state) {
                     
                     document.body.innerHTML = htmlPayload;
                     
+                    // --- AUTO-SAVE INTEGRATION ---
+                    // Re-run restoration because Simplify Mode replaced the DOM.
+                    // This ensures text typed BEFORE clicking simplify isn't lost.
+                    setTimeout(restoreFormData, 100);
+
+                    // Reset flags
                     bionicProcessed = false; 
                     if(isTTSActive) stopTTS(); 
                 }
@@ -93,21 +107,25 @@ function applyState(state) {
             originalBody = null;
             articleText = "";
             bionicProcessed = false;
+            
+            // Re-attach listeners and restore data to original body
+            setTimeout(restoreFormData, 100);
+            
             if(isTTSActive) stopTTS();
         }
     }
 
-    // Feature 2: Dyslexia Font
+    // --- Feature 2: Dyslexia Font ---
     if (state.dyslexia) document.body.classList.add("ca-dyslexia-mode");
     else document.body.classList.remove("ca-dyslexia-mode");
 
-    // Feature 3: Bionic Reading
+    // --- Feature 3: Bionic Reading ---
     toggleBionic(state.bionic);
 
-    // Feature 4: Reading Ruler
+    // --- Feature 4: Reading Ruler ---
     toggleRuler(state.ruler);
     
-    // Feature 5: TTS
+    // --- Feature 5: TTS ---
     if (state.tts) {
         isTTSActive = true; 
     } else {
@@ -157,6 +175,7 @@ function toggleBionic(enable) {
 
 function processBionicText() {
     const root = document.querySelector('.ca-content') || document.body;
+    
     const walker = document.createTreeWalker(
         root, NodeFilter.SHOW_TEXT,
         {
@@ -201,6 +220,7 @@ function processBionicText() {
 }
 
 // --- TTS LOGIC ---
+
 function stripBionic() {
     const bionics = document.querySelectorAll('.ca-bionic-target');
     bionics.forEach(b => {
@@ -215,8 +235,12 @@ function stripBionic() {
 
 function prepareTTS() {
     const root = document.querySelector('.ca-content') || document.body;
-    if (document.querySelector('.ca-bionic-target')) stripBionic();
-    if (root.querySelector('.ca-tts-word')) return;
+    
+    if (document.querySelector('.ca-bionic-target')) {
+        stripBionic();
+    }
+
+    if (root.querySelector('.ca-tts-word')) return; 
 
     const walker = document.createTreeWalker(
         root, NodeFilter.SHOW_TEXT,
@@ -238,6 +262,7 @@ function prepareTTS() {
         const text = textNode.nodeValue;
         const words = text.split(/(\s+)/); 
         const fragment = document.createDocumentFragment();
+        
         words.forEach(word => {
             if (word.trim().length > 0) {
                 const span = document.createElement('span');
@@ -261,18 +286,32 @@ function prepareTTS() {
 }
 
 function handleTTSControl(command, settings) {
-    if (command === 'stop') { stopTTS(); return; }
+    if (command === 'stop') {
+        stopTTS();
+        return;
+    }
+
     if (command === 'play') {
         stopTTS(); 
+
         prepareTTS();
+
         setTimeout(() => {
             const spans = Array.from(document.querySelectorAll('.ca-tts-word'));
-            if (spans.length === 0) { alert("ContextAware: No text found."); return; }
-            
+            if (spans.length === 0) {
+                alert("ContextAware: No text found.");
+                return;
+            }
+
             let fullText = "";
             ttsWordMap = [];
+            
             spans.forEach(span => {
-                ttsWordMap.push({ start: fullText.length, end: fullText.length + span.textContent.length, element: span });
+                ttsWordMap.push({ 
+                    start: fullText.length, 
+                    end: fullText.length + span.textContent.length,
+                    element: span 
+                });
                 fullText += span.textContent + " "; 
             });
 
@@ -287,6 +326,7 @@ function handleTTSControl(command, settings) {
                 if (event.name === 'word') {
                     const charIndex = event.charIndex;
                     const match = ttsWordMap.find(w => charIndex >= w.start && charIndex < w.end);
+                    
                     if (match) {
                         const old = document.querySelector('.ca-tts-active');
                         if (old) old.classList.remove('ca-tts-active');
@@ -295,7 +335,11 @@ function handleTTSControl(command, settings) {
                     }
                 }
             };
-            ttsUtterance.onend = () => { document.querySelectorAll('.ca-tts-active').forEach(el => el.classList.remove('ca-tts-active')); };
+
+            ttsUtterance.onend = () => {
+                 document.querySelectorAll('.ca-tts-active').forEach(el => el.classList.remove('ca-tts-active'));
+            };
+
             window.speechSynthesis.speak(ttsUtterance);
         }, 50);
     }
@@ -304,4 +348,98 @@ function handleTTSControl(command, settings) {
 function stopTTS() {
     window.speechSynthesis.cancel();
     document.querySelectorAll('.ca-tts-active').forEach(el => el.classList.remove('ca-tts-active'));
+}
+
+// --- AUTO-SAVE ENGINE (NEW FEATURE) ---
+
+function initAutoSaveListeners() {
+    // Attach to document for event delegation (handles DOM replacements)
+    document.addEventListener('input', (e) => {
+        const target = e.target;
+        if (target.matches('input, textarea, select')) {
+            // SECURITY: Ignore password fields
+            if (target.type === 'password') return;
+            saveFormData();
+        }
+    });
+
+    // Clear storage on submit (assuming task is done)
+    document.addEventListener('submit', () => {
+        chrome.storage.local.remove(PAGE_KEY);
+    });
+}
+
+// Debounce save to prevent lag
+let saveTimeout;
+function saveFormData() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        const data = {};
+        const inputs = document.querySelectorAll('input, textarea, select');
+        
+        inputs.forEach((input, index) => {
+            if (input.type === 'hidden' || input.type === 'password' || input.type === 'submit') return;
+            
+            // Create stable ID
+            const fieldId = input.id || input.name || `field_${index}`;
+            
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                if (input.checked) data[fieldId] = input.value;
+            } else {
+                data[fieldId] = input.value;
+            }
+        });
+
+        const storageObj = {};
+        storageObj[PAGE_KEY] = data;
+        chrome.storage.local.set(storageObj);
+    }, 500); // 500ms delay
+}
+
+function restoreFormData() {
+    chrome.storage.local.get([PAGE_KEY], (result) => {
+        const data = result[PAGE_KEY];
+        if (!data) return;
+
+        let restoredCount = 0;
+        const inputs = document.querySelectorAll('input, textarea, select');
+
+        inputs.forEach((input, index) => {
+            const fieldId = input.id || input.name || `field_${index}`;
+            
+            if (data[fieldId] !== undefined) {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    if (data[fieldId] === input.value) {
+                        input.checked = true;
+                        restoredCount++;
+                    }
+                } else {
+                    input.value = data[fieldId];
+                    restoredCount++;
+                }
+            }
+        });
+
+        if (restoredCount > 0) {
+            showRestoreToast();
+        }
+    });
+}
+
+function showRestoreToast() {
+    const existing = document.getElementById('ca-restore-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'ca-restore-toast';
+    toast.innerHTML = `
+        <span style="font-weight:bold; font-size:1.1em;">ContextAware Safety Net</span><br>
+        <span>Your form progress has been restored.</span>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
 }
