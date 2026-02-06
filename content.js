@@ -5,6 +5,7 @@ let bionicProcessed = false;
 
 // Global reference for ruler
 let rulerElement = null;
+let tintElement = null; // NEW for Tint support
 
 // TTS Variables
 let ttsUtterance = null;
@@ -17,7 +18,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         applyState(request.state);
     } 
     else if (request.action === "generate_summary") {
-        // Existing summary logic
         const sourceText = articleText || document.body.innerText;
         const cleanSource = sourceText.split('\n').filter(line => line.trim().length > 40).join(' ');
 
@@ -82,6 +82,7 @@ function applyState(state) {
                     document.body.innerHTML = htmlPayload;
                     
                     bionicProcessed = false; 
+                    tintElement = null;
                     if(isTTSActive) stopTTS(); 
                 }
             } catch(e) { console.error(e); }
@@ -93,6 +94,7 @@ function applyState(state) {
             originalBody = null;
             articleText = "";
             bionicProcessed = false;
+            tintElement = null;
             if(isTTSActive) stopTTS();
         }
     }
@@ -113,6 +115,38 @@ function applyState(state) {
     } else {
         stopTTS();
         isTTSActive = false;
+    }
+
+    // Feature 6: Sensory Tint
+    // We add this call here to support the tint feature referenced in popup.js
+    toggleTint(state.tint);
+}
+
+// --- TINT LOGIC (New helper for completeness) ---
+function toggleTint(colorName) {
+    let existingTint = document.getElementById("ca-tint-overlay");
+    if (!existingTint) {
+        tintElement = document.createElement("div");
+        tintElement.id = "ca-tint-overlay";
+        document.body.appendChild(tintElement);
+    } else {
+        tintElement = existingTint;
+    }
+
+    const colors = {
+        "off": "transparent",
+        "blue": "rgba(173, 216, 230, 0.25)",  
+        "green": "rgba(144, 238, 144, 0.25)", 
+        "rose": "rgba(255, 182, 193, 0.25)",  
+        "peach": "rgba(255, 218, 185, 0.25)", 
+        "gray": "rgba(128, 128, 128, 0.25)"   
+    };
+
+    if (colorName && colorName !== "off") {
+        tintElement.style.display = "block";
+        tintElement.style.backgroundColor = colors[colorName] || "transparent";
+    } else {
+        tintElement.style.display = "none";
     }
 }
 

@@ -1,4 +1,4 @@
-/* --- 1. SIMPLIFY MODE (Clean White Paper) --- */
+/* --- 1. SIMPLIFY MODE --- */
 .ca-simplified-body {
     background-color: #f4f7f6 !important;
     color: #333 !important;
@@ -38,7 +38,6 @@
 
 .ca-content h2, .ca-content h3 { margin-top: 1.5em; color: #333; }
 
-/* Clean Media */
 .ca-content img, .ca-content video, .ca-content iframe {
     max-width: 100% !important;
     height: auto !important;
@@ -58,16 +57,16 @@
     line-height: 2.0 !important;
 }
 
-/* --- 3. READING RULER (Spotlight) --- */
+/* --- 3. READING RULER --- */
 #ca-ruler {
     position: fixed;
     left: 0;
     width: 100vw;
     height: 60px;
-    pointer-events: none; /* Clicks pass through */
+    pointer-events: none; 
     z-index: 2147483647;
     display: none;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); /* Dims rest of screen */
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); 
     border-top: 2px solid rgba(255, 255, 255, 0.3);
     border-bottom: 2px solid rgba(255, 255, 255, 0.3);
     transition: top 0.05s linear;
@@ -81,26 +80,32 @@
     font-weight: 700 !important;
 }
 
-/* --- 5. TEXT TO SPEECH (TTS) --- */
-/* The word wrapper */
+/* --- 5. TEXT TO SPEECH --- */
 .ca-tts-word {
     display: inline;
 }
-
-/* The active word being spoken */
 .ca-tts-active {
-    background-color: #ffeb3b !important; /* Bright Yellow Highlight */
+    background-color: #ffeb3b !important; 
     color: #000 !important;
     border-radius: 3px;
-    box-shadow: 0 0 0 2px #ffeb3b; /* Ensure highlight is visible */
+    box-shadow: 0 0 0 2px #ffeb3b; 
 }
-
-/* Animation: Snappy (Instant) */
 .ca-tts-anim-snappy .ca-tts-active {
     transition: none !important;
 }
-
-/* Animation: Smooth (Gradual Fade) */
 .ca-tts-anim-smooth .ca-tts-active {
     transition: background-color 0.2s ease-in-out, color 0.2s ease !important;
+}
+
+/* --- 6. SENSORY TINT --- */
+#ca-tint-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483646; 
+    pointer-events: none;
+    display: none;
+    transition: background-color 0.2s ease;
 }
